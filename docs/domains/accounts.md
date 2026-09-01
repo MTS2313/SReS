@@ -11,6 +11,7 @@ Representar os dados de negócio de uma pessoa que utiliza o SReS, sem duplicar 
 ## Responsabilidades
 
 - associar os dados locais ao identificador da identidade no Keycloak;
+- provisionar o registro local no primeiro acesso autenticado;
 - manter o estado operacional da conta;
 - manter o vínculo com o Telegram;
 - relacionar a conta à sua cota e ao histórico de relatórios;
@@ -28,7 +29,7 @@ Não haverá:
 - membros;
 - permissões de negócio além da separação entre usuário e administrador.
 
-## Identidade
+## Identidade e provisionamento
 
 O Keycloak será a autoridade para:
 
@@ -38,20 +39,28 @@ O Keycloak será a autoridade para:
 - identidade base;
 - roles de acesso.
 
-A aplicação não armazenará senhas. Ela manterá uma referência estável ao usuário do Keycloak e somente os dados necessários ao domínio do SReS.
+A aplicação não armazenará senhas.
+
+No primeiro acesso com token válido, a aplicação criará o registro local associado ao identificador estável do usuário no Keycloak. A criação será idempotente: requisições simultâneas ou repetidas não poderão criar contas duplicadas.
+
+## Relação com Telegram
+
+A relação será individual:
+
+- uma conta poderá ter somente um usuário do Telegram vinculado;
+- um usuário do Telegram poderá estar vinculado a somente uma conta;
+- a troca exigirá desvincular o vínculo anterior e gerar um novo código.
 
 ## Vinculação com Telegram
 
-A vinculação será iniciada pela aplicação:
-
-1. a conta autenticada solicita um código temporário;
-2. a pessoa envia o código ao bot;
-3. a API valida o código;
-4. o identificador confirmado do Telegram é associado à conta.
+1. A conta autenticada solicita um código.
+2. O código permanece válido por 10 minutos e aceita um único uso.
+3. A pessoa envia o código ao bot.
+4. A API valida código, prazo, uso e disponibilidade do vínculo.
+5. O identificador confirmado do Telegram é associado à conta.
+6. O código é invalidado.
 
 O ID do Telegram não será aceito como prova de posse quando apenas digitado pelo usuário.
-
-A duração do código, a cardinalidade dos vínculos e as regras de substituição de um vínculo existente ainda precisam ser definidas.
 
 ## Administração
 
