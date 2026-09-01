@@ -21,17 +21,22 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - [Cotas e custos](domains/quotas-and-costs.md)
 - [Integração com Telegram](integrations/telegram.md)
 - [Integração com Ollama](integrations/ollama.md)
+- [ADR-001: Spring Modulith](decisions/ADR-001-spring-modulith.md)
 
 ## Escopo inicial
 
+- API em monólito modular com Spring Modulith;
 - autenticação e identidade gerenciadas pelo Keycloak;
-- vinculação segura entre conta e usuário do Telegram;
+- provisionamento local no primeiro acesso autenticado;
+- vinculação individual e segura com Telegram;
 - três tipos fixos de relatório;
-- entrada por texto e, opcionalmente, um arquivo PDF;
-- processamento assíncrono com worker interno;
+- entrada por texto e, opcionalmente, um PDF de até 10 MB e 50 páginas;
+- processamento assíncrono com worker interno baseado no PostgreSQL;
 - armazenamento de arquivos no MinIO;
-- cota semanal por conta;
+- cota semanal por conta, renovada segunda-feira no fuso `America/Sao_Paulo`;
 - registro de tokens, duração e custo técnico estimado;
+- migrations com Flyway e validação do schema pelo Hibernate;
+- documentação OpenAPI;
 - endpoints administrativos mínimos protegidos pela role `ADMIN`.
 
 ## Fora do escopo deste ciclo
