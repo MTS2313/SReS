@@ -27,14 +27,29 @@ Essa limitação reduz custo, latência e complexidade. A qualidade deverá ser 
 - análise detalhada;
 - extração estruturada.
 
-Os prompts e formatos exatos ainda precisam ser definidos e versionados. Eles não serão configuráveis pelo usuário nesta versão.
+Os prompts e formatos exatos ainda precisam ser definidos. Eles não serão configuráveis pelo usuário nesta versão.
+
+## Prompts e configuração
+
+Os prompts serão arquivos versionados no repositório junto da aplicação. Isso permitirá revisar mudanças e relacionar o comportamento do relatório à versão implantada.
+
+Serão configurações externas:
+
+- endereço do Ollama;
+- modelo associado;
+- parâmetros técnicos permitidos;
+- valor estimado por milhão de tokens.
+
+Não haverá edição de prompt pelo banco de dados ou por endpoint administrativo no MVP.
+
+A associação exata entre os três tipos e os modelos ainda será definida.
 
 ## Contexto enviado
 
 A chamada poderá combinar:
 
 - a descrição informada pelo usuário;
-- o texto extraído de um PDF opcional;
+- o texto extraído de um PDF opcional de até 10 MB e 50 páginas;
 - as instruções internas do tipo escolhido.
 
 OCR, interpretação de imagens e transcrição de áudio estão fora do MVP.
@@ -61,7 +76,3 @@ Uma falha permite uma tentativa automática adicional. Depois da segunda falha t
 - o usuário recebe uma resposta adequada pelo canal solicitante.
 
 O conteúdo técnico sensível da falha não deve ser exposto diretamente ao usuário.
-
-## Configuração
-
-Endereço do Ollama, modelo e parâmetros técnicos serão configurações de ambiente ou da aplicação. A estratégia para associar modelos diferentes aos tipos de relatório ainda não foi definida.
