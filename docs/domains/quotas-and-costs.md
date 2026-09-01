@@ -12,9 +12,9 @@ Limitar o volume semanal de relatórios por conta e registrar o consumo técnico
 
 Cada conta terá, inicialmente, uma cota padrão de **10 relatórios por semana**.
 
-A renovação ocorrerá toda segunda-feira em horário fixo. O fuso horário e o horário exato ainda precisam ser definidos.
+O período começa toda segunda-feira às 00:00 e termina no início da segunda-feira seguinte, usando o fuso `America/Sao_Paulo`.
 
-A aplicação deve representar o período e o consumo de forma auditável, sem depender apenas de um contador difícil de reconstruir.
+A aplicação deve representar o período e o consumo de forma auditável, sem depender apenas de um contador difícil de reconstruir. Instantes persistidos devem continuar inequívocos mesmo com a regra de negócio expressa no fuso escolhido.
 
 ## Estados da cota
 
@@ -32,6 +32,8 @@ A capacidade semanal será observada como:
 4. Quando ocorre uma falha técnica definitiva, a reserva retorna ao saldo disponível.
 
 A operação de reserva precisa ser atômica no PostgreSQL.
+
+Uma reserva feita em um período pertence àquele período, mesmo se o processamento atravessar a renovação semanal. O tratamento exato dessa transição deverá preservar o histórico e não duplicar o saldo.
 
 ## Ajustes administrativos
 
