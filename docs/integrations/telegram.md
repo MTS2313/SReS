@@ -21,6 +21,12 @@ As regras de negócio continuarão na aplicação. O bot será um adaptador da A
 - entregar resumo e arquivo Markdown;
 - consultar a cota semanal.
 
+## Cardinalidade do vínculo
+
+- uma conta aceita somente um vínculo ativo com Telegram;
+- um usuário do Telegram aceita somente um vínculo ativo com conta;
+- a substituição exige desvincular o vínculo atual e gerar um novo código.
+
 ## Vinculação
 
 A conta autenticada gera um código temporário e o envia ao bot. O bot apresenta o código e a identidade confirmada do Telegram à API.
@@ -28,18 +34,17 @@ A conta autenticada gera um código temporário e o envia ao bot. O bot apresent
 O código deve:
 
 - ser imprevisível;
-- expirar;
+- valer por 10 minutos;
+- aceitar um único uso;
 - ser validado pelo backend;
-- não poder ser reutilizado depois de consumido.
-
-O prazo de expiração ainda não foi decidido.
+- ser invalidado após uso ou expiração.
 
 ## Fluxo de solicitação
 
 1. O bot identifica a conta pelo vínculo confirmado.
 2. A pessoa escolhe o tipo de relatório.
 3. O bot coleta a descrição.
-4. O bot aceita um PDF opcional.
+4. O bot aceita um PDF opcional de até 10 MB e 50 páginas.
 5. A API valida entrada e cota.
 6. O bot confirma o recebimento sem aguardar o Ollama.
 7. Após o processamento, o sistema envia o resultado.
