@@ -30,17 +30,21 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - Java 21 e Maven;
 - API em monólito modular com Spring Modulith;
 - endpoints sob `/api/v1`, identificadores UUID e erros em Problem Details;
+- rotas centradas em `/me`, `/reports`, `/usage` e `/admin`;
+- criação assíncrona respondendo `202 Accepted`;
 - criação por API autenticada ou Telegram usando o mesmo caso de uso;
+- idempotência por `update_id` do Telegram e suporte a `Idempotency-Key` na API;
 - autenticação e identidade gerenciadas pelo Keycloak;
 - provisionamento local no primeiro acesso autenticado;
 - vinculação individual e segura com Telegram;
-- bot interno usando long polling;
+- bot interno usando long polling e estado de conversa persistido;
 - três tipos fixos de relatório;
 - entrada por texto e, opcionalmente, um PDF de até 10 MB e 50 páginas;
 - extração textual com Apache PDFBox, sem OCR;
 - processamento assíncrono com worker interno baseado no PostgreSQL;
 - armazenamento privado de arquivos no MinIO;
 - cota semanal por conta, renovada segunda-feira no fuso `America/Sao_Paulo`;
+- ajustes de cota auditáveis;
 - registro de tokens, duração e custo técnico estimado;
 - migrations com Flyway e validação do schema pelo Hibernate;
 - logs estruturados, correlation ID e Spring Boot Actuator;
@@ -56,5 +60,6 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - pagamentos, faturas e checkout;
 - geração de relatório em PDF;
 - múltiplos documentos por solicitação;
+- exclusão de relatórios pelo usuário;
 - filas externas;
 - orquestração dinâmica entre agentes.
