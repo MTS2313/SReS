@@ -6,7 +6,7 @@ O repositório ainda não possui implementação. Toda a documentação deste pr
 
 ## Visão geral
 
-SReS é um sistema de criação e processamento de relatórios assistidos por modelos executados no Ollama. O primeiro produto comercial será uma cota semanal de relatórios.
+SReS é um sistema de criação e processamento de relatórios assistidos por modelos executados no Ollama. O primeiro produto comercial será uma cota semanal de relatórios representada por planos internos.
 
 O Telegram será a primeira interface funcional. A API será o núcleo do produto e deverá permitir que, após atingir uma estrutura mínima, uma interface seja desenvolvida separadamente — possivelmente um aplicativo mobile.
 
@@ -18,6 +18,7 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - [Arquitetura do backend](architecture/backend.md)
 - [Contrato da API](architecture/api.md)
 - [Contas](domains/accounts.md)
+- [Planos de relatórios](domains/plans.md)
 - [Relatórios](domains/reports.md)
 - [Cotas e custos](domains/quotas-and-costs.md)
 - [Integração com Telegram](integrations/telegram.md)
@@ -36,6 +37,9 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - idempotência por `update_id` do Telegram e suporte a `Idempotency-Key` na API;
 - autenticação e identidade gerenciadas pelo Keycloak;
 - provisionamento local no primeiro acesso autenticado;
+- contas individuais com plano de relatórios;
+- atribuição administrativa de planos e plano padrão;
+- bloqueio que impede novo consumo sem retirar acesso ao histórico;
 - vinculação individual e segura com Telegram;
 - bot interno usando long polling e estado de conversa persistido;
 - três tipos fixos de relatório;
@@ -43,9 +47,9 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - extração textual com Apache PDFBox, sem OCR;
 - processamento assíncrono com worker interno baseado no PostgreSQL;
 - armazenamento privado de arquivos no MinIO;
-- cota semanal por conta, renovada segunda-feira no fuso `America/Sao_Paulo`;
+- cota semanal renovada segunda-feira no fuso `America/Sao_Paulo`;
 - ajustes de cota auditáveis;
-- registro de tokens, duração e custo técnico estimado;
+- custos monetários técnicos visíveis somente para administradores;
 - migrations com Flyway e validação do schema pelo Hibernate;
 - logs estruturados, correlation ID e Spring Boot Actuator;
 - documentação OpenAPI;
@@ -58,6 +62,7 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - editor de agentes ou prompts;
 - equipes e organizações;
 - pagamentos, faturas e checkout;
+- escolha de modelo pelo usuário;
 - geração de relatório em PDF;
 - múltiplos documentos por solicitação;
 - exclusão de relatórios pelo usuário;
