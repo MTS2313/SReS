@@ -8,13 +8,15 @@
 
 Limitar o volume semanal de relatórios por conta e registrar o consumo técnico de cada processamento.
 
-## Cota inicial
+## Origem da cota
 
-Cada conta terá, inicialmente, uma cota padrão de **10 relatórios por semana**.
+A cota base vem do plano de relatórios associado à conta. O plano padrão inicial permitirá **10 relatórios por semana**.
+
+A cota efetiva do período poderá incluir ajustes administrativos auditáveis além do limite definido pelo plano.
 
 O período começa toda segunda-feira às 00:00 e termina no início da segunda-feira seguinte, usando o fuso `America/Sao_Paulo`.
 
-A aplicação deve representar o período e o consumo de forma auditável, sem depender apenas de um contador difícil de reconstruir. Instantes persistidos devem continuar inequívocos mesmo com a regra de negócio expressa no fuso escolhido.
+A aplicação deve representar período, origem e consumo de forma auditável. Instantes persistidos devem continuar inequívocos mesmo com a regra de negócio expressa no fuso escolhido.
 
 ## Estados da cota
 
@@ -26,7 +28,7 @@ A capacidade semanal será observada como:
 
 ## Reserva e confirmação
 
-1. Ao aceitar uma solicitação, o sistema reserva uma unidade.
+1. Ao aceitar uma solicitação de uma conta ativa, o sistema reserva uma unidade.
 2. A reserva impede que solicitações concorrentes ultrapassem o limite.
 3. Quando o relatório termina com sucesso, a reserva vira consumo definitivo.
 4. Quando ocorre uma falha técnica definitiva, a reserva retorna ao saldo disponível.
@@ -52,13 +54,13 @@ Todo ajuste exigirá um motivo e registrará:
 
 O histórico também deverá permitir distinguir:
 
-- cota padrão;
+- cota originada do plano;
 - acréscimo ou redução administrativa;
 - reserva;
 - consumo;
 - devolução por falha.
 
-Alterar a cota não apaga lançamentos anteriores.
+Alterar a cota ou o plano não apaga lançamentos anteriores.
 
 Pagamentos, assinaturas, faturas e compra automática de cota estão fora do MVP.
 
@@ -78,7 +80,7 @@ A ausência de alguma métrica do provedor não deve impedir a conclusão do rel
 
 ## Estimativa monetária
 
-Cada modelo terá um valor técnico configurável por milhão de tokens.
+O modelo configurado terá um valor técnico por milhão de tokens.
 
 A estimativa inicial será:
 
@@ -86,14 +88,21 @@ A estimativa inicial será:
 
 Esse valor é uma estimativa interna de operação. Não representa preço cobrado do cliente e não substitui contabilidade de energia, hardware ou infraestrutura.
 
-## Consultas previstas
+## Visibilidade
 
-A API permitirá consultar:
+Usuários poderão consultar:
 
+- plano atual;
 - cota total do período;
 - unidades disponíveis, reservadas e consumidas;
 - data da próxima renovação;
-- histórico de consumo;
+- histórico próprio de consumo.
+
+Somente administradores poderão consultar:
+
 - tokens e duração por relatório;
-- custo estimado por relatório e por período;
-- histórico auditável de ajustes, quando autorizado.
+- custo monetário estimado por relatório e por período;
+- histórico auditável de ajustes;
+- métricas operacionais agregadas.
+
+O custo técnico não será apresentado ao usuário como preço.
