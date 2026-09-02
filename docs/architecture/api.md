@@ -16,10 +16,24 @@ O bot está dentro da mesma aplicação e usa os serviços de aplicação direta
 - JSON para recursos e respostas estruturadas;
 - `multipart/form-data` para criação de relatório com arquivo;
 - UUID como identificador externo;
-- paginação para coleções;
+- paginação por `page`, `size` e `sort`;
 - erros no formato Problem Details da RFC 9457;
 - documentação OpenAPI desde a primeira versão;
 - autenticação por token emitido pelo Keycloak.
+
+## Organização inicial
+
+Os recursos serão centrados na conta autenticada:
+
+- `/api/v1/me` para a conta atual;
+- `/api/v1/me/telegram-link` para vínculo com Telegram;
+- `/api/v1/reports` para criação e consulta de relatórios;
+- `/api/v1/usage` para cota, consumo e custos;
+- `/api/v1/admin/*` para operações administrativas.
+
+O usuário comum não informará o próprio identificador de conta nas rotas. A identidade será derivada do token.
+
+A definição de sub-rotas e verbos será consolidada na specification de implementação e publicada no OpenAPI.
 
 ## Criação de relatório
 
@@ -31,9 +45,29 @@ O endpoint autenticado de criação receberá `multipart/form-data` com:
 
 O PDF aceita até 10 MB e 50 páginas. Validações de formato, tamanho e páginas devem acontecer antes da reserva de cota.
 
-A resposta confirma o recebimento e identifica o relatório em `PENDING`; ela não espera a execução do Ollama.
+Quando a solicitação for aceita, a API responderá:
 
-Telegram e API iniciam o mesmo caso de uso de aplicação e obedecem às mesmas regras de validação, cota e processamento.
+- HTTP `202 Accepted`;
+- identificador UUID do relatório;
+- estado `PENDING`;
+- header `Location` apontando para o recurso de consulta.
+
+A resposta não espera a execução do Ollama.
+
+Telegram e API iniciam o mesmo caso de uso e obedecem às mesmas regras de validação, cota e processamento.
+
+## Idempotência
+
+A criação pela API aceitará o header `Idempotency-Key`.
+
+- repetir a mesma chave dentro do escopo da mesma conta não cria outro relatório;
+- a resposta deve referenciar o resultado da primeira solicitação aceita;
+- a chave de uma conta não interfere em outra;
+- o uso do header será suportado, mas não obrigatório no MVP.
+
+No Telegram, o `update_id` será tratado como identificador único de entrada para impedir processamento duplicado da mesma atualização.
+
+O tempo de retenção das chaves de idempotência ainda será definido na implementação.
 
 ## Consulta
 
@@ -49,13 +83,13 @@ A API permitirá consultar, de acordo com autorização:
 - métricas e custo estimado;
 - operações administrativas já definidas.
 
-A lista definitiva de rotas ainda será decidida antes da specification de implementação.
-
 ## Resultado e arquivos
 
 O conteúdo completo continuará no MinIO. O cliente fará download por endpoint autenticado da API, que validará conta e autorização antes de transmitir o arquivo.
 
 Não haverá URL pública permanente ou armazenamento do Markdown completo no PostgreSQL.
+
+Não haverá endpoint de exclusão de relatório no MVP. Relatórios e arquivos serão mantidos enquanto a conta estiver ativa. A política precisa ser revisada antes do lançamento público.
 
 ## Autorização
 
