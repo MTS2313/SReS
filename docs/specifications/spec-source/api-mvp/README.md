@@ -8,13 +8,19 @@
 - Impacto percebido: não existe backend capaz de autenticar contas, controlar planos e cotas, receber e processar relatórios, armazenar arquivos ou operar pelo Telegram.
 - Resultado desejado: entregar uma API MVP executável, testada e documentada, pronta para receber uma interface em etapa posterior.
 
+### PRB-002 — Preparar a estrutura para monorepo
+
+- Contexto relatado: após a implementação inicial da TASK-001, o projeto Spring Boot ficou na raiz do repositório, que receberá outras aplicações futuramente.
+- Impacto percebido: manter o build Java na raiz mistura a aplicação backend com a futura estrutura do monorepo e aumenta o custo de reorganização das próximas tasks.
+- Resultado desejado: mover o projeto Spring para `backend/` antes da TASK-002, mantendo documentação e operações compartilhadas na raiz.
+
 ## Relação entre os problemas
 
-As responsabilidades pertencem ao mesmo objetivo porque compõem um único fluxo verificável: uma conta autenticada possui plano e cota, solicita relatório por API ou Telegram, envia texto e PDF opcional, aguarda processamento assíncrono pelo Ollama e consulta ou recebe o resultado.
+As responsabilidades pertencem ao mesmo objetivo porque compõem um único fluxo verificável: uma conta autenticada possui plano e cota, solicita relatório por API ou Telegram, envia texto e PDF opcional, aguarda processamento assíncrono pelo Ollama e consulta ou recebe o resultado. A organização em `backend/` corrige a fundação dessa mesma iniciativa antes da implementação dos domínios; não constitui um produto independente.
 
 ## Contexto no repositório
 
-O repositório MTS2313/SReS, branch main, contém somente documentação planejada em docs. Não há código, pom.xml, scripts, AGENTS.md, infraestrutura, migrations, testes ou specifications anteriores.
+O repositório MTS2313/SReS, branch main, já contém a implementação inicial da TASK-001. O projeto Spring, Maven Wrapper, código, Compose, infraestrutura e scripts foram criados na raiz. A fundação ainda não foi aceita porque a decisão posterior de monorepo exige uma correção estrutural antes da TASK-002.
 
 Documentos de produto e arquitetura que permanecem como referência:
 
@@ -33,10 +39,11 @@ Documentos de produto e arquitetura que permanecem como referência:
 
 ## Evidências do estado atual
 
-- A árvore do repositório contém apenas docs — não existe implementação atual.
-- A pasta scripts não existe — operações repetíveis ainda não possuem interface segura.
-- docs/specifications não existia antes desta iniciativa.
-- Toda a documentação viva identifica o comportamento como planejado.
+- `pom.xml`, `mvnw`, `.mvn/` e `src/` existem atualmente na raiz e formam o projeto Spring implementado pela TASK-001.
+- `compose.yaml`, `infra/`, `.env.example` e `scripts/` existem na raiz e funcionam como recursos operacionais compartilhados.
+- `scripts/test.sh` e `scripts/validate.sh` assumem atualmente que o Maven Wrapper e o código também estão na raiz.
+- `docs/specifications` contém o pacote `api-mvp`; a TASK-001 volta para `needs_correction` até a reorganização ser validada.
+- A documentação viva ainda descreve a fundação como planejada e deverá ser atualizada pela correção somente onde houver evidência de implementação.
 
 ## Decisões aprovadas
 
@@ -64,6 +71,7 @@ Documentos de produto e arquitetura que permanecem como referência:
 | DEC-020 | Custos monetários somente para ADMIN | Usuário vê plano, cota e consumo |
 | DEC-021 | Specifications na main e oito tasks sequenciais | Uma task por vez após revisão |
 | DEC-022 | Frontend excluído | O OpenAPI será o contrato para cliente futuro |
+| DEC-023 | Estrutura preparada para monorepo | `backend/` contém `.mvn/`, `mvnw`, `pom.xml` e `src/`; `docs/`, `scripts/`, `compose.yaml`, `infra/`, `.env.example` e `.gitignore` permanecem na raiz |
 
 ## Objetivos
 
@@ -90,11 +98,11 @@ Documentos de produto e arquitetura que permanecem como referência:
 
 ### REQ-001 — Fundação executável
 
-Criar projeto Java 21 com Maven Wrapper, dependências compatíveis e pinadas, Spring Boot, Spring Modulith, Spring AI, MapStruct, JPA, Flyway, PostgreSQL, MinIO, Keycloak Resource Server, PDFBox, OpenAPI e Actuator.
+Criar em `backend/` o projeto Java 21 com Maven Wrapper, dependências compatíveis e pinadas, Spring Boot, Spring Modulith, Spring AI, MapStruct, JPA, Flyway, PostgreSQL, MinIO, Keycloak Resource Server, PDFBox, OpenAPI e Actuator.
 
 ### REQ-002 — Módulos e operações locais
 
-Organizar módulos de contas, planos, uso/cotas/custos, relatórios, armazenamento, Ollama, Telegram e administração. Criar Compose local e scripts seguros para subir, parar, testar, validar e resetar o ambiente.
+Organizar em `backend/src/` os módulos de contas, planos, uso/cotas/custos, relatórios, armazenamento, Ollama, Telegram e administração. Manter na raiz o Compose local, a infraestrutura compartilhada e scripts seguros para subir, parar, testar, validar e resetar o ambiente.
 
 ### REQ-003 — Identidade e contas
 
@@ -156,6 +164,8 @@ Fornecer Dockerfile, configuração por ambiente, documentação de execução, 
 - Telegram não chama a própria API por HTTP.
 - Long polling deve ter somente um executor ativo.
 - Operações mutáveis e recorrentes usam scripts da raiz.
+- Os scripts da raiz devem localizar o repositório de forma independente do diretório atual e executar o build em `backend/`.
+- A validação estrutural deve falhar se `pom.xml`, `mvnw`, `.mvn/` ou `src/` voltarem a ocupar a raiz.
 - reset-dev.sh deve exigir alvo de desenvolvimento e confirmação explícita.
 
 ## Casos de borda
@@ -176,7 +186,7 @@ Fornecer Dockerfile, configuração por ambiente, documentação de execução, 
 - API: contrato novo /api/v1; não há compatibilidade legada.
 - Interface: nenhum frontend nesta iniciativa.
 - Integrações: Keycloak e MinIO locais; Ollama e Telegram externos opcionais por configuração.
-- Migração: não há dados legados; somente seed local e Plano Inicial.
+- Migração: não há dados legados; somente seed local e Plano Inicial. A correção da TASK-001 move arquivos versionados sem alterar schema ou dados.
 
 ## Riscos e cuidados
 
@@ -191,7 +201,7 @@ Fornecer Dockerfile, configuração por ambiente, documentação de execução, 
 
 ## Critérios de aceite
 
-- [ ] AC-001 — Projeto compila em Java 21, módulos são verificados e ambiente local sobe por script.
+- [ ] AC-001 — Projeto em `backend/` compila em Java 21, módulos são verificados e o ambiente local sobe pelos scripts da raiz.
 - [ ] AC-002 — Keycloak autentica USER e ADMIN e o provisionamento local é idempotente.
 - [ ] AC-003 — Contas e planos cumprem estado, padrão, inativação e bloqueio.
 - [ ] AC-004 — Cota resiste à concorrência, renova, ajusta e reseta com auditoria.
