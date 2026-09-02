@@ -14,9 +14,12 @@ A aplicação será um monólito modular com Spring Modulith. A decisão e suas 
 
 | Responsabilidade | Tecnologia |
 | --- | --- |
+| Linguagem e runtime | Java 21 |
+| Build | Maven |
 | Backend e API | Spring Boot |
 | Organização modular | Spring Modulith |
 | Integração com modelos | Spring AI |
+| Extração textual de PDF | Apache PDFBox |
 | Mapeamento entre camadas | MapStruct |
 | Persistência relacional | PostgreSQL com JPA |
 | Evolução do schema | Flyway |
@@ -24,6 +27,8 @@ A aplicação será um monólito modular com Spring Modulith. A decisão e suas 
 | Identidade e autenticação | Keycloak |
 | Inferência local | Ollama |
 | Contrato HTTP | OpenAPI |
+
+O projeto deverá incluir Maven Wrapper para reduzir dependência da versão de Maven instalada na máquina de execução.
 
 ## Organização modular
 
@@ -48,6 +53,7 @@ Spring Modulith será usado para verificar limites e dependências. Isso não im
 - bot do Telegram como adaptador de entrada e entrega;
 - worker interno para buscar e processar trabalhos pendentes;
 - integração Spring AI com o Ollama;
+- Apache PDFBox para extrair texto de PDFs sem OCR;
 - PostgreSQL como fonte dos dados estruturados e do estado de processamento;
 - MinIO para PDFs de entrada e arquivos Markdown de saída;
 - Keycloak como autoridade de identidade e emissão de tokens.
@@ -62,11 +68,11 @@ O Hibernate deverá usar `ddl-auto=validate` nos ambientes controlados, validand
 
 O envio de uma solicitação não aguardará a resposta do Ollama.
 
-O estado do trabalho será persistido no PostgreSQL. Um worker agendado buscará trabalhos pendentes e usará bloqueio seguro no banco para evitar que duas execuções processem o mesmo relatório. Reiniciar a aplicação não deve perder trabalhos já aceitos.
+O estado do trabalho será persistido no PostgreSQL. Um worker agendado buscará trabalhos `PENDING` e usará bloqueio seguro no banco para impedir que duas execuções processem o mesmo relatório. Reiniciar a aplicação não deve perder trabalhos já aceitos.
 
 Não haverá RabbitMQ ou outra fila externa no MVP.
 
-A consulta e o bloqueio exatos serão definidos na implementação, respeitando o comportamento do PostgreSQL e a possibilidade de mais de uma instância da aplicação.
+Um relatório em `PROCESSING` há mais de 30 minutos será considerado interrompido e voltará para `PENDING`. Esse tempo será configurável. A implementação deve reduzir o risco de recuperar um trabalho que ainda esteja sendo executado legitimamente.
 
 ## Provisionamento de conta
 
@@ -76,16 +82,22 @@ A operação precisa ser idempotente e usar o identificador estável do usuário
 
 ## Contrato da API
 
-A API será documentada com OpenAPI desde a primeira versão. Esse contrato servirá ao Telegram, às operações técnicas e ao futuro cliente web ou mobile.
+A API seguirá estas convenções:
 
-A documentação da API não deve antecipar decisões visuais ou tecnologia do frontend.
+- prefixo `/api/v1`;
+- UUID como identificador externo;
+- paginação em coleções;
+- erros HTTP no formato Problem Details definido pela RFC 9457;
+- contrato OpenAPI desde a primeira versão.
+
+Esse contrato servirá ao Telegram, às operações técnicas e ao futuro cliente web ou mobile. A documentação da API não deve antecipar decisões visuais ou tecnologia do frontend.
 
 ## Separação de responsabilidades
 
 - Keycloak mantém credenciais, login e identidade.
 - A aplicação mantém os dados de negócio associados ao identificador do usuário no Keycloak.
 - PostgreSQL mantém metadados e estados; não armazena o conteúdo binário dos PDFs.
-- MinIO mantém arquivos e a aplicação conserva as referências necessárias.
+- MinIO mantém arquivos em bucket privado e a aplicação conserva as referências necessárias.
 - Ollama executa os modelos, mas não é fonte de verdade para relatórios, consumo ou custos.
 - Telegram traduz interações do usuário para operações da aplicação; regras de negócio não ficam presas ao bot.
 
@@ -100,7 +112,6 @@ A documentação da API não deve antecipar decisões visuais ou tecnologia do f
 ## Questões ainda abertas
 
 - dependências exatas permitidas entre os módulos;
-- política de recuperação de trabalhos interrompidos durante processamento;
 - modelo Ollama associado a cada tipo de relatório;
-- política de novas tentativas de entrega no Telegram;
+- política de retenção dos arquivos;
 - tecnologia da futura interface.
