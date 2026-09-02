@@ -16,14 +16,16 @@ Controlar a solicitação, o processamento, o resultado e o histórico dos relat
 
 As estruturas exatas de saída e os prompts ainda serão definidos. Os três tipos serão controlados internamente e não serão editáveis pelo usuário.
 
-## Canais de criação
+## Canais e origem
 
 Relatórios poderão ser solicitados:
 
-- pelo bot do Telegram;
-- por endpoint autenticado da API.
+- pelo bot do Telegram, com origem `TELEGRAM`;
+- por endpoint autenticado, com origem `API`.
 
-Os dois canais executam o mesmo caso de uso e obedecem às mesmas regras. O módulo Telegram chama o serviço da aplicação diretamente, sem HTTP interno.
+A origem será registrada no relatório para métricas e diagnóstico. Ela não altera regras de cota ou processamento.
+
+Os dois canais executam o mesmo caso de uso. O módulo Telegram chama o serviço da aplicação diretamente, sem HTTP interno.
 
 ## Estados
 
@@ -36,7 +38,7 @@ Os dois canais executam o mesmo caso de uso e obedecem às mesmas regras. O mód
 
 A entrega pelo Telegram não altera o estado do processamento. Um relatório continua `COMPLETED` mesmo quando sua notificação ou seu arquivo não puderem ser entregues pelo canal.
 
-Cancelamento não faz parte do MVP.
+Cancelamento e exclusão não fazem parte do MVP.
 
 ## Entrada
 
@@ -49,6 +51,13 @@ Cada solicitação poderá conter:
 Pela API, a criação usará `multipart/form-data`. O texto do PDF será extraído com Apache PDFBox. Imagens, áudio, múltiplos PDFs e OCR não fazem parte do MVP.
 
 Tamanho, quantidade de páginas e formato precisam ser validados antes de reservar cota e agendar processamento.
+
+## Idempotência
+
+- atualizações do Telegram são deduplicadas por `update_id`;
+- a API suporta `Idempotency-Key` dentro do escopo da conta;
+- uma repetição reconhecida retorna ou referencia o relatório originalmente criado;
+- uma repetição não reserva nova unidade de cota.
 
 ## Saída
 
@@ -67,21 +76,25 @@ A geração de arquivos PDF de saída não faz parte desta versão.
 
 ## Fluxo principal
 
-1. O canal identifica a conta.
-2. O usuário escolhe um tipo fixo de relatório.
-3. O sistema recebe e valida a descrição e o PDF opcional.
-4. O arquivo de entrada é armazenado no MinIO.
-5. Uma unidade de cota é reservada de forma atômica.
-6. O relatório é criado em `PENDING`.
-7. O worker agendado seleciona e bloqueia o trabalho no PostgreSQL.
-8. O relatório muda para `PROCESSING`.
-9. O worker prepara o contexto e executa o agente por meio do Spring AI.
-10. Métricas e resultado são persistidos.
-11. No sucesso, o relatório muda para `COMPLETED` e a reserva vira consumo.
-12. Um evento de conclusão é publicado para integrações interessadas.
-13. Se a origem ou o vínculo exigir entrega, o módulo Telegram processa o evento.
+1. O canal identifica a conta e a origem.
+2. O sistema verifica se a solicitação já foi processada.
+3. O usuário escolhe um tipo fixo de relatório.
+4. O sistema recebe e valida a descrição e o PDF opcional.
+5. O PDF válido é armazenado temporariamente no MinIO.
+6. Em operação transacional, a aplicação reserva uma unidade de cota e cria o relatório em `PENDING`.
+7. A referência temporária é associada ao relatório e organizada em seu prefixo definitivo.
+8. Se a criação falhar, o temporário deve ser removido.
+9. O worker agendado seleciona e bloqueia o trabalho no PostgreSQL.
+10. O relatório muda para `PROCESSING`.
+11. O worker prepara o contexto e executa o agente por meio do Spring AI.
+12. Métricas e resultado são persistidos.
+13. No sucesso, o relatório muda para `COMPLETED` e a reserva vira consumo.
+14. Um evento de conclusão é publicado para integrações interessadas.
+15. Se a origem ou o vínculo exigir entrega, o módulo Telegram processa o evento.
 
 Na falha definitiva, o estado `FAILED`, a devolução da reserva e o evento correspondente são registrados antes da notificação ao canal.
+
+Como PostgreSQL e MinIO não compartilham transação, falhas entre os passos serão tratadas com compensação e limpeza de objetos temporários.
 
 ## Persistência e recuperação
 
@@ -108,10 +121,16 @@ Uma conta não pode ultrapassar sua cota por enviar solicitações simultâneas.
 
 O worker também deve impedir o processamento duplicado de uma mesma solicitação.
 
+## Retenção
+
+Não haverá exclusão de relatórios no MVP. Dados e arquivos serão mantidos enquanto a conta estiver ativa.
+
+A política de retenção precisa ser revisada antes do lançamento público.
+
 ## Relações conceituais
 
 - uma conta possui muitos relatórios;
-- um relatório possui um tipo;
+- um relatório possui um tipo e uma origem;
 - um relatório pode possuir um arquivo de entrada;
 - um relatório concluído possui um arquivo de saída;
 - um relatório produz um registro de consumo e métricas de custo.
