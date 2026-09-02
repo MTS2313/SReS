@@ -17,7 +17,7 @@ Um plano de relatórios define:
 - estado ativo ou inativo;
 - indicação de plano padrão, quando aplicável.
 
-A primeira configuração terá uma cota de 10 relatórios por semana. O nome comercial do plano ainda não foi decidido.
+A primeira configuração será o **Plano Inicial**, com 10 relatórios por semana, e será o plano padrão.
 
 ## Relação com contas
 
@@ -27,7 +27,20 @@ A primeira configuração terá uma cota de 10 relatórios por semana. O nome co
 - usuários não escolhem ou contratam planos pelo sistema nesta versão;
 - uma conta continua podendo receber ajustes administrativos de cota além do valor do plano.
 
-A regra de vigência quando um plano é trocado durante um período semanal ainda precisa ser definida.
+## Troca de plano
+
+A troca realizada pelo administrador entra em vigor imediatamente.
+
+Ao trocar:
+
+1. o novo plano é associado à conta;
+2. a cota disponível é reiniciada com o limite completo do novo plano;
+3. o novo saldo permanece válido até a próxima renovação semanal regular;
+4. o consumo anterior continua no histórico, mas não reduz a nova cota;
+5. relatórios já reservados ou em processamento permanecem registrados no período anterior;
+6. plano anterior, novo plano, administrador, motivo e data são auditados.
+
+A troca pode conceder uma nova cota completa dentro da mesma semana. Esse é um efeito intencional da operação administrativa.
 
 ## Administração
 
@@ -39,7 +52,9 @@ A role `ADMIN` poderá:
 - definir o plano padrão;
 - atribuir um plano a uma conta.
 
-Inativar um plano impede novas atribuições, mas não deve apagar seu histórico nem alterar silenciosamente contas já associadas. O comportamento de contas ainda vinculadas a um plano inativado será definido antes da implementação.
+Inativar um plano impede novas atribuições, mas não remove as contas já associadas. Essas contas continuam usando o plano até que um administrador realize a migração.
+
+Histórico de planos e atribuições não será apagado.
 
 ## Limites
 
