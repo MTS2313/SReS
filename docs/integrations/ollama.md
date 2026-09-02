@@ -13,19 +13,22 @@ Usar modelos executados no Ollama para produzir os relatórios, integrados ao ba
 Cada tipo de relatório será tratado como um agente especializado composto por:
 
 - um propósito fixo;
-- um prompt interno;
-- um modelo configurado pela aplicação;
+- um prompt interno próprio;
 - regras de entrada e saída conhecidas.
+
+Os três agentes usarão inicialmente o mesmo modelo Ollama configurável. A especialização será feita pelos prompts, não por modelos distintos.
 
 Cada processamento fará uma chamada principal ao modelo. Não haverá cadeia entre analista e revisor, decisões autônomas ou orquestração dinâmica entre vários agentes.
 
-Essa limitação reduz custo, latência e complexidade. A qualidade deverá ser validada antes de justificar uma segunda etapa de revisão.
+Essa limitação reduz custo, latência e complexidade. A qualidade deverá ser validada antes de justificar modelos diferentes ou uma segunda etapa de revisão.
 
 ## Tipos previstos
 
 - resumo executivo;
 - análise detalhada;
 - extração estruturada.
+
+Todos produzirão Markdown. A extração estruturada usará seções, listas e tabelas, sem resposta JSON obrigatória no MVP.
 
 Os prompts e formatos exatos ainda precisam ser definidos. Eles não serão configuráveis pelo usuário nesta versão.
 
@@ -36,13 +39,13 @@ Os prompts serão arquivos versionados no repositório junto da aplicação. Iss
 Serão configurações externas:
 
 - endereço do Ollama;
-- modelo associado;
+- modelo compartilhado;
 - parâmetros técnicos permitidos;
 - valor estimado por milhão de tokens.
 
 Não haverá edição de prompt pelo banco de dados ou por endpoint administrativo no MVP.
 
-A associação exata entre os três tipos e os modelos ainda será definida.
+O modelo inicial específico ainda será escolhido considerando o hardware disponível e a qualidade necessária.
 
 ## Contexto enviado
 
@@ -73,6 +76,7 @@ Uma falha permite uma tentativa automática adicional. Depois da segunda falha t
 - o relatório é marcado como falho;
 - a reserva de cota é devolvida;
 - o erro é registrado;
+- um evento de falha é publicado para integrações interessadas;
 - o usuário recebe uma resposta adequada pelo canal solicitante.
 
 O conteúdo técnico sensível da falha não deve ser exposto diretamente ao usuário.
