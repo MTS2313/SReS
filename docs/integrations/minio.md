@@ -35,7 +35,7 @@ Fluxo planejado:
 4. associar e organizar o objeto no prefixo definitivo do relatório;
 5. remover o temporário caso a operação de negócio falhe.
 
-Uma rotina de limpeza removerá temporários abandonados por falhas ou interrupções. O tempo para considerar um temporário abandonado ainda será definido.
+Uma rotina de limpeza removerá objetos que permanecerem temporários por mais de 1 hora. Objetos já associados a um relatório não participam dessa limpeza.
 
 ## Responsabilidades
 
@@ -55,7 +55,7 @@ Uma rotina de limpeza removerá temporários abandonados por falhas ou interrup�
 
 ## Retenção
 
-Não haverá exclusão pelo usuário nem remoção automática no MVP. Arquivos serão mantidos enquanto a conta estiver ativa.
+Não haverá exclusão pelo usuário nem remoção automática de arquivos definitivos no MVP. Arquivos serão mantidos enquanto a conta estiver ativa.
 
 Essa política deverá ser revisada antes do lançamento público.
 
