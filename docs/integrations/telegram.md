@@ -49,6 +49,20 @@ O código deve:
 6. O bot confirma o recebimento sem aguardar o Ollama.
 7. Após o processamento, o sistema envia o resultado.
 
+## Entrega e falhas
+
+A entrega de um relatório concluído terá no máximo três tentativas.
+
+Se todas falharem:
+
+- o relatório permanece `COMPLETED`;
+- a falha de entrega é registrada separadamente;
+- o conteúdo continua disponível pela API para uma interface futura ou operação técnica;
+- não há nova execução do Ollama;
+- a cota não é devolvida, pois o relatório foi produzido.
+
+As regras de intervalo entre as três tentativas ainda serão definidas na implementação.
+
 ## Restrições
 
 - mensagens e arquivos devem respeitar limites definidos pela API;
@@ -56,5 +70,3 @@ O código deve:
 - tokens do bot são segredos de infraestrutura;
 - comandos recebidos não substituem autorização administrativa;
 - uma falha no envio ao Telegram não deve apagar um relatório já concluído.
-
-A política de novas tentativas para entrega no Telegram ainda será definida.
