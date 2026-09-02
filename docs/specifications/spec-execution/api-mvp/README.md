@@ -17,7 +17,7 @@ TDD é obrigatório. Em cada task, o agente deve:
 ## Preparação obrigatória
 
 1. Ler instruções do repositório, se existirem.
-2. Inspecionar a pasta raiz scripts.
+2. Inspecionar a pasta raiz `scripts/`; ela permanece como interface operacional do monorepo.
 3. Confirmar branch main, estado local limpo e task ready.
 4. Ler tasks/api-mvp/README.md, esta execução e spec-source/api-mvp/README.md.
 5. Conferir docs vivos relacionados à task.
@@ -27,17 +27,17 @@ TDD é obrigatório. Em cada task, o agente deve:
 
 | Área/caminho | Papel | Cuidado |
 |---|---|---|
-| pom.xml e .mvn/ | build e versões | Pinagem compatível com Java 21 |
-| src/main/java/br/com/sres | aplicação modular | Sem acesso cruzado a internals |
-| src/main/resources/db/migration | schema e seed | Flyway como única fonte |
-| src/main/resources/prompts | prompts versionados | Três tipos fixos |
-| src/test | TDD e integração | Externos simulados por padrão |
-| scripts/ | interface operacional | Criada na TASK-001 |
-| compose.yaml e infra/ | ambiente local e realm | Sem Ollama obrigatório |
-| docs/ | arquitetura, OpenAPI e operação | Manter planejado/current coerente |
-| Dockerfile | empacotamento final | Criado na TASK-008 |
+| backend/pom.xml e backend/.mvn/ | build e versões da API | Pinagem compatível com Java 21 |
+| backend/src/main/java/br/com/sres | aplicação modular | Sem acesso cruzado a internals |
+| backend/src/main/resources/db/migration | schema e seed | Flyway como única fonte |
+| backend/src/main/resources/prompts | prompts versionados | Três tipos fixos |
+| backend/src/test | TDD e integração | Externos simulados por padrão |
+| scripts/ | interface operacional do monorepo | Executar build e validações em `backend/` |
+| compose.yaml e infra/ | ambiente local compartilhado e realm | Permanecem na raiz; sem Ollama obrigatório |
+| docs/ | arquitetura, OpenAPI e operação | Permanecem na raiz; manter Planned/Current coerente |
+| backend/Dockerfile | empacotamento final da API | Criado na TASK-008 |
 
-Os caminhos de código são alvos esperados da aplicação nova. Se a TASK-001 adotar convenção diferente de forma justificada, atualizar primeiro estas specifications.
+A estrutura aprovada é uma raiz de monorepo com `backend/` para o projeto Spring. Não mover `docs/`, `scripts/`, `compose.yaml`, `infra/`, `.env.example` ou `.gitignore` para dentro do backend.
 
 ## Fases de execução
 
@@ -45,7 +45,7 @@ Os caminhos de código são alvos esperados da aplicação nova. Se a TASK-001 a
 
 - Requisitos: REQ-001, REQ-002, REQ-013.
 - Task: TASK-001.
-- Resultado: projeto compila, módulos existem, Compose e scripts funcionam, realm local é importável.
+- Resultado: projeto em `backend/` compila, módulos existem, Compose e scripts da raiz funcionam, realm local é importável.
 - Interrupção: incompatibilidade de versões ou ambiente incapaz de executar testes.
 
 ### Fase 2 — Identidade, contas e planos
@@ -99,17 +99,19 @@ Os caminhos de código são alvos esperados da aplicação nova. Se a TASK-001 a
 
 ## Política de scripts
 
-A pasta scripts não existe no estado inicial e será criada pela TASK-001.
+A pasta `scripts/` foi criada pela implementação inicial da TASK-001 e permanece na raiz como interface operacional do monorepo. A correção deve adaptar os scripts de build e validação para o projeto em `backend/`.
 
 Scripts obrigatórios após a TASK-001:
 
 - scripts/dev-up.sh — subir PostgreSQL, MinIO e Keycloak e verificar saúde.
 - scripts/dev-down.sh — parar o ambiente sem apagar dados por padrão.
-- scripts/test.sh — executar testes determinísticos.
-- scripts/validate.sh — testes, verificação modular, migrations e validações estáticas aplicáveis.
+- scripts/test.sh — executar testes determinísticos no projeto `backend/`.
+- scripts/validate.sh — validar a estrutura do monorepo e executar testes, verificação modular, migrations e validações estáticas no projeto `backend/`.
 - scripts/reset-dev.sh — reset somente de recursos de desenvolvimento com confirmação explícita.
 
-Comandos diretos são permitidos somente para leitura, git status/diff, buscas e diagnóstico seguro. Mudanças de ambiente, banco, dependências e infraestrutura devem passar pelos scripts.
+Comandos diretos são permitidos somente para leitura, git status/diff, movimentação versionada autorizada e diagnóstico seguro. Mudanças de ambiente, banco, dependências e infraestrutura devem passar pelos scripts.
+
+Para a correção estrutural da TASK-001, a evidência Red é `scripts/validate.sh` falhando ao exigir a nova estrutura antes da movimentação. O estado Green exige o mesmo script e `scripts/test.sh` concluindo com o projeto dentro de `backend/`.
 
 ## Testes e validações
 
@@ -142,6 +144,8 @@ MinIO usa prefixo temporário e compensação. Operações falhas devem ser repe
 - Não pular o teste Red por já conhecer a solução.
 - Não usar mocks onde concorrência ou semântica PostgreSQL são parte do requisito.
 - Não marcar task done sem evidências dos scripts.
+- Não deixar cópias de `pom.xml`, `mvnw`, `.mvn/` ou `src/` na raiz.
+- Não mover a infraestrutura ou documentação compartilhada para `backend/`.
 - Não alterar docs vivos para esconder divergência; interromper e reportar.
 
 ## Rastreabilidade
