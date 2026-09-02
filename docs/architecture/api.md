@@ -84,10 +84,23 @@ Administradores poderão consultar adicionalmente:
 - contas e seus estados;
 - tokens e duração;
 - custos monetários estimados;
-- ajustes de cota;
+- ajustes e resets de cota;
 - métricas operacionais.
 
 Custos técnicos monetários não serão expostos ao usuário comum.
+
+## Administração de planos
+
+A atribuição administrativa de um plano:
+
+- exige role `ADMIN`;
+- exige motivo;
+- entra em vigor imediatamente;
+- reinicia a cota com o limite completo do novo plano;
+- preserva consumo e reservas anteriores no histórico;
+- retorna o plano e a nova alocação de cota resultantes.
+
+Planos inativos não aceitam novas atribuições. Contas já vinculadas continuam neles até migração administrativa.
 
 ## Resultado e arquivos
 
