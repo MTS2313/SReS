@@ -18,6 +18,23 @@ Essa escolha evita configurar webhook público, mas impõe uma restrição opera
 
 Webhook e suporte simultâneo aos dois modos estão fora do MVP.
 
+Cada `update_id` processado será registrado de forma única. Se o Telegram reenviar a mesma atualização, a aplicação não repetirá a ação nem consumirá nova cota.
+
+## Estado da conversa
+
+O progresso da conversa será persistido no PostgreSQL.
+
+A persistência deve permitir continuar depois de reinício da aplicação, incluindo etapas como:
+
+- escolha do tipo;
+- espera pela descrição;
+- espera pelo PDF opcional;
+- confirmação ou criação da solicitação.
+
+O estado da conversa não substitui o relatório. Depois que a solicitação for criada, o relatório passa a ser a fonte de verdade do processamento.
+
+A expiração de conversas abandonadas ainda será definida.
+
 ## Capacidades iniciais
 
 - vincular o usuário do Telegram a uma conta;
@@ -49,14 +66,16 @@ O código deve:
 
 ## Fluxo de solicitação
 
-1. O bot identifica a conta pelo vínculo confirmado.
-2. A pessoa escolhe o tipo de relatório.
-3. O bot coleta a descrição.
-4. O bot aceita um PDF opcional de até 10 MB e 50 páginas.
-5. O mesmo caso de uso da API valida entrada e cota.
-6. O bot confirma o recebimento sem aguardar o Ollama.
-7. Após o processamento persistir o novo estado, o módulo recebe o evento de conclusão ou falha.
-8. O sistema envia o resultado ou uma mensagem adequada.
+1. O bot verifica e registra o `update_id`.
+2. O bot identifica a conta pelo vínculo confirmado.
+3. A pessoa escolhe o tipo de relatório.
+4. O estado da conversa é persistido a cada etapa.
+5. O bot coleta a descrição.
+6. O bot aceita um PDF opcional de até 10 MB e 50 páginas.
+7. O mesmo caso de uso da API valida entrada e cota.
+8. O bot confirma o recebimento sem aguardar o Ollama.
+9. Após o processamento persistir o novo estado, o módulo recebe o evento de conclusão ou falha.
+10. O sistema envia o resultado ou uma mensagem adequada.
 
 ## Entrega e falhas
 
