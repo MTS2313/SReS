@@ -2,7 +2,7 @@
 
 ## Estado
 
-ready
+needs_correction
 
 ## Dependências
 
@@ -10,7 +10,11 @@ ready
 
 ## Objetivo
 
-Criar uma fundação Java 21 compilável, modular e operacional, com ambiente local e scripts seguros, sobre a qual as demais tasks possam trabalhar.
+Concluir a fundação Java 21 compilável, modular e operacional dentro de `backend/`, preservando a raiz como interface compartilhada do futuro monorepo.
+
+## Contexto da correção
+
+A implementação inicial criou corretamente o projeto Spring, Compose, realm e scripts, mas posicionou `pom.xml`, `mvnw`, `.mvn/` e `src/` na raiz. A decisão DEC-023 exige mover somente o projeto Maven para `backend/` antes da TASK-002.
 
 ## Leitura obrigatória
 
@@ -19,60 +23,64 @@ Criar uma fundação Java 21 compilável, modular e operacional, com ambiente lo
 - [Arquitetura](../../../architecture/backend.md)
 - [ADR Spring Modulith](../../../decisions/ADR-001-spring-modulith.md)
 
-## Escopo
+## Escopo da correção
 
-- Criar projeto Maven br.com.sres:sres-api e Maven Wrapper.
-- Selecionar e fixar versões estáveis e compatíveis de Spring Boot, Spring Modulith e Spring AI para Java 21; registrar a escolha.
-- Adicionar dependências previstas pela specification sem implementar domínios.
-- Criar aplicação mínima e estrutura modular inicial para contas, planos, uso, relatórios, armazenamento, Ollama, Telegram e administração.
-- Criar teste de verificação dos módulos e dependências permitidas.
-- Configurar perfis e propriedades tipadas, com Telegram e Ollama desabilitados por padrão.
-- Configurar Flyway e Hibernate validate sem usar criação automática de schema.
-- Criar compose.yaml para PostgreSQL, MinIO e Keycloak com healthchecks e volumes nomeados.
-- Criar realm de desenvolvimento importável, client da API, roles USER e ADMIN e usuários locais claramente não produtivos.
-- Criar .env.example sem segredos reais.
-- Criar scripts/dev-up.sh, dev-down.sh, test.sh, validate.sh e reset-dev.sh.
-- Documentar requisitos locais mínimos.
+- Criar `backend/` como diretório da aplicação.
+- Mover de forma versionada `.mvn/`, `mvnw`, `pom.xml` e `src/` para `backend/`, preservando histórico e permissões.
+- Manter `docs/`, `scripts/`, `compose.yaml`, `infra/`, `.env.example` e `.gitignore` na raiz.
+- Alterar primeiro `scripts/validate.sh` para validar a estrutura esperada e produzir evidência Red antes da movimentação.
+- Adaptar `scripts/test.sh` e `scripts/validate.sh` para executar o Maven Wrapper em `backend/`.
+- Garantir que todos os scripts resolvam a raiz do repositório sem depender do diretório corrente.
+- Preservar o comportamento de `scripts/dev-up.sh`, `scripts/dev-down.sh` e `scripts/reset-dev.sh` sobre o Compose da raiz.
+- Criar `README.md` na raiz com a estrutura do monorepo, requisitos mínimos e comandos oficiais por `scripts/`.
+- Atualizar a documentação viva somente onde o estado e os caminhos observados já forem sustentados pela implementação.
+- Executar novamente todas as validações da fundação.
 
 ## Fora do escopo
 
-- Entidades e endpoints de negócio.
+- Entidades, endpoints ou regras de negócio.
 - Integração real com Ollama ou Telegram.
+- Criação de `frontend/` ou documentação de frontend.
 - Dockerfile de produção.
-- CI/CD, frontend e deploy.
+- CI/CD, deploy ou reorganização adicional não exigida pela DEC-023.
+- Alteração de versões ou dependências sem bloqueio comprovado.
 
 ## Passos verificáveis
 
-1. Criar o harness mínimo de build e testes.
-2. Escrever teste inicialmente falho que expresse a arquitetura modular esperada.
-3. Registrar a falha Red antes de completar os módulos.
-4. Implementar o mínimo para o teste modular ficar Green.
-5. Refatorar a estrutura mantendo o teste verde.
-6. Criar Compose, realm e scripts com proteções.
-7. Subir o ambiente por script e verificar saúde.
-8. Executar testes e validação pelo contrato de scripts.
+1. Confirmar branch, estado local e arquivos implementados pela TASK-001.
+2. Modificar `scripts/validate.sh` para exigir `backend/pom.xml`, `backend/mvnw`, `backend/.mvn/` e `backend/src/`, e proibir suas cópias na raiz.
+3. Executar `scripts/validate.sh` antes de mover os arquivos e registrar a falha esperada como evidência Red.
+4. Mover os quatro componentes do projeto Maven para `backend/`.
+5. Adaptar os scripts de teste e validação, criar o README da raiz e corrigir referências documentais aplicáveis.
+6. Executar `scripts/test.sh` e `scripts/validate.sh` até Green.
+7. Subir e parar o ambiente pelos scripts da raiz para garantir que o Compose e `infra/` continuem funcionais.
+8. Refatorar caminhos duplicados nos scripts sem quebrar as validações.
 
 ## Validação obrigatória
 
-- scripts/dev-up.sh — PostgreSQL, MinIO e Keycloak saudáveis.
-- scripts/test.sh — aplicação mínima e teste modular verdes.
-- scripts/validate.sh — build limpo, módulos verificados e configuração válida.
-- Inspeção de scripts/reset-dev.sh — exige ambiente de desenvolvimento e confirmação explícita.
-- scripts/dev-down.sh — encerra sem apagar volumes por padrão.
+- `scripts/validate.sh` antes da movimentação — falha estrutural registrada como Red.
+- `scripts/test.sh` após a movimentação — aplicação mínima e teste modular verdes em `backend/`.
+- `scripts/validate.sh` após a movimentação — estrutura, build limpo, módulos e configuração válidos.
+- `scripts/dev-up.sh` — PostgreSQL, MinIO e Keycloak saudáveis usando o Compose da raiz.
+- Inspeção de `scripts/reset-dev.sh` — continua exigindo ambiente de desenvolvimento e confirmação explícita.
+- `scripts/dev-down.sh` — encerra sem apagar volumes por padrão.
+- `git status --short` e `git diff --summary` — movimentações reconhecidas e nenhuma duplicação estrutural.
 
 ## Critérios de conclusão
 
-- [ ] Maven Wrapper compila com Java 21.
-- [ ] Versões estão fixadas e a compatibilidade foi registrada.
+- [ ] `backend/pom.xml`, `backend/mvnw`, `backend/.mvn/` e `backend/src/` existem.
+- [ ] Não existem `pom.xml`, `mvnw`, `.mvn/` ou `src/` na raiz.
+- [ ] `docs/`, `scripts/`, `compose.yaml`, `infra/`, `.env.example` e `.gitignore` permanecem na raiz.
+- [ ] Scripts funcionam quando invocados a partir da raiz e de outro diretório.
+- [ ] Maven Wrapper compila com Java 21 dentro de `backend/`.
 - [ ] Spring Modulith verifica os módulos sem violação.
-- [ ] Flyway está habilitado e Hibernate não cria schema.
+- [ ] Flyway permanece habilitado e Hibernate não cria schema.
 - [ ] Integrações opcionais não impedem a inicialização.
 - [ ] Compose sobe os três serviços com healthchecks.
-- [ ] Realm local contém client, roles e usuários de desenvolvimento.
-- [ ] Scripts são executáveis, limitados e documentados.
-- [ ] Evidências Red, Green e refatoração foram fornecidas.
-- [ ] scripts/test.sh e scripts/validate.sh terminam com sucesso.
+- [ ] README da raiz explica a estrutura e os comandos oficiais.
+- [ ] Evidências Red, Green e Refactor foram fornecidas.
+- [ ] `scripts/test.sh` e `scripts/validate.sh` terminam com sucesso.
 
 ## Contrato da resposta do agente
 
-Informar resumo, arquivos alterados, evidência Red, scripts/testes com resultados, validações omitidas, decisões de versões, desvios, riscos e estado recomendado.
+Informar resumo, arquivos movidos e alterados, evidência Red, Green e Refactor, scripts/testes com resultados, validações omitidas, desvios, riscos e estado recomendado.
