@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.** O repositório ainda não contém código ou infraestrutura.
+**Current — fundação da TASK-001.** A aplicação Spring Boot executável está em `backend/`; os domínios de negócio permanecem nas tasks seguintes.
 
 ## Direção
 
@@ -29,7 +29,7 @@ A aplicação será um monólito modular com Spring Modulith. A decisão e suas 
 | Contrato HTTP | OpenAPI |
 | Saúde e métricas | Spring Boot Actuator |
 
-O projeto deverá incluir Maven Wrapper para reduzir dependência da versão de Maven instalada na máquina de execução.
+O projeto em `backend/` inclui Maven Wrapper para reduzir dependência da versão de Maven instalada na máquina de execução.
 
 ## Organização modular
 

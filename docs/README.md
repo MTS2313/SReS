@@ -2,7 +2,7 @@
 
 ## Estado do projeto
 
-O repositório ainda não possui implementação. Toda a documentação deste primeiro ciclo descreve o estado **planejado** do produto e da API.
+O repositório contém a fundação executável do backend e a documentação do produto e da API. Os domínios de negócio continuam sendo implementados nas tasks sequenciais.
 
 ## Visão geral
 
@@ -26,10 +26,11 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - [Integração com MinIO](integrations/minio.md)
 - [ADR-001: Spring Modulith](decisions/ADR-001-spring-modulith.md)
 - [Specifications — API MVP](specifications/tasks/api-mvp/README.md)
+- [Desenvolvimento local](operations/local-development.md)
 
 ## Escopo inicial
 
-- Java 21 e Maven;
+- Java 21 e Maven Wrapper em `backend/`;
 - API em monólito modular com Spring Modulith;
 - endpoints sob `/api/v1`, identificadores UUID e erros em Problem Details;
 - rotas centradas em `/me`, `/reports`, `/usage` e `/admin`;

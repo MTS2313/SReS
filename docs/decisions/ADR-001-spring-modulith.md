@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita — planejada, ainda não implementada.
+Aceita — implementada na fundação da TASK-001.
 
 ## Contexto
 
