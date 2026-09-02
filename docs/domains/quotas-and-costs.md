@@ -30,6 +30,7 @@ A capacidade semanal será observada como:
 2. A reserva impede que solicitações concorrentes ultrapassem o limite.
 3. Quando o relatório termina com sucesso, a reserva vira consumo definitivo.
 4. Quando ocorre uma falha técnica definitiva, a reserva retorna ao saldo disponível.
+5. Uma solicitação duplicada reconhecida não cria outra reserva.
 
 A operação de reserva precisa ser atômica no PostgreSQL.
 
@@ -37,13 +38,27 @@ Uma reserva feita em um período pertence àquele período, mesmo se o processam
 
 ## Ajustes administrativos
 
-A role `ADMIN` poderá ajustar a cota de uma conta. O ajuste deverá ser registrado de forma que seja possível distinguir:
+A role `ADMIN` poderá ajustar a cota de uma conta.
+
+Todo ajuste exigirá um motivo e registrará:
+
+- administrador responsável;
+- conta afetada;
+- valor anterior;
+- valor novo;
+- diferença aplicada;
+- motivo;
+- data e hora.
+
+O histórico também deverá permitir distinguir:
 
 - cota padrão;
 - acréscimo ou redução administrativa;
 - reserva;
 - consumo;
 - devolução por falha.
+
+Alterar a cota não apaga lançamentos anteriores.
 
 Pagamentos, assinaturas, faturas e compra automática de cota estão fora do MVP.
 
@@ -80,4 +95,5 @@ A API permitirá consultar:
 - data da próxima renovação;
 - histórico de consumo;
 - tokens e duração por relatório;
-- custo estimado por relatório e por período.
+- custo estimado por relatório e por período;
+- histórico auditável de ajustes, quando autorizado.
