@@ -10,11 +10,15 @@ Controlar a solicitação, o processamento, o resultado e o histórico dos relat
 
 ## Tipos iniciais
 
-- **Resumo executivo:** produz uma síntese curta, priorizando pontos centrais.
-- **Análise detalhada:** produz uma leitura mais profunda e organizada do material.
-- **Extração estruturada:** identifica e organiza informações presentes no material.
+Os tipos serão códigos fixos da aplicação, não registros editáveis no PostgreSQL:
 
-As estruturas exatas de saída e os prompts ainda serão definidos. Os três tipos serão controlados internamente e não serão editáveis pelo usuário.
+- `EXECUTIVE_SUMMARY`: resumo executivo;
+- `DETAILED_ANALYSIS`: análise detalhada;
+- `STRUCTURED_EXTRACTION`: extração estruturada.
+
+Cada código possui prompt versionado no repositório. Não haverá criação, edição ou exclusão de tipos por usuário ou administrador no MVP.
+
+As estruturas exatas dos prompts ainda serão definidas.
 
 ## Canais e origem
 
@@ -23,7 +27,7 @@ Relatórios poderão ser solicitados:
 - pelo bot do Telegram, com origem `TELEGRAM`;
 - por endpoint autenticado, com origem `API`.
 
-A origem será registrada no relatório para métricas e diagnóstico. Ela não altera regras de cota ou processamento.
+A origem será registrada para métricas e diagnóstico. Ela não altera regras de cota ou processamento.
 
 Os dois canais executam o mesmo caso de uso. O módulo Telegram chama o serviço da aplicação diretamente, sem HTTP interno.
 
@@ -56,6 +60,7 @@ Tamanho, quantidade de páginas e formato precisam ser validados antes de reserv
 
 - atualizações do Telegram são deduplicadas por `update_id`;
 - a API suporta `Idempotency-Key` dentro do escopo da conta;
+- chaves da API permanecem reconhecíveis por 24 horas;
 - uma repetição reconhecida retorna ou referencia o relatório originalmente criado;
 - uma repetição não reserva nova unidade de cota.
 
@@ -117,7 +122,9 @@ Erros causados por entrada inválida devem ser rejeitados antes da reserva sempr
 
 ## Concorrência
 
-Uma conta não pode ultrapassar sua cota por enviar solicitações simultâneas. Reserva e validação precisam ocorrer como uma única operação consistente.
+Uma conta bloqueada não pode criar relatório.
+
+Uma conta ativa não pode ultrapassar sua cota por enviar solicitações simultâneas. Reserva e validação precisam ocorrer como uma única operação consistente.
 
 O worker também deve impedir o processamento duplicado de uma mesma solicitação.
 
@@ -130,7 +137,7 @@ A política de retenção precisa ser revisada antes do lançamento público.
 ## Relações conceituais
 
 - uma conta possui muitos relatórios;
-- um relatório possui um tipo e uma origem;
+- um relatório possui um tipo fixo e uma origem;
 - um relatório pode possuir um arquivo de entrada;
 - um relatório concluído possui um arquivo de saída;
 - um relatório produz um registro de consumo e métricas de custo.
