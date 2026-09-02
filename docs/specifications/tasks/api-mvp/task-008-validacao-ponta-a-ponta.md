@@ -26,7 +26,7 @@ Comprovar o MVP completo em ambiente reproduzível, empacotar a API e entregar d
 - Validar provisionamento, plano, cota, relatório sem PDF e com PDF, worker simulado, resultado e download.
 - Validar bloqueio, idempotência, concorrência, falha definitiva e troca de plano.
 - Validar fluxo Telegram completo com fake, incluindo vínculo, conversa e entrega.
-- Criar Dockerfile multi-stage ou equivalente enxuto e seguro para a API.
+- Criar `backend/Dockerfile` multi-stage ou equivalente enxuto e seguro para a API, com contexto de build documentado para o monorepo.
 - Garantir configuração externa e imagem sem segredos.
 - Consolidar scripts/validate.sh como entrada global.
 - Criar documentação operacional: pré-requisitos, env, dev-up/down, teste, validação, reset, execução da API, Ollama e Telegram opcionais.
@@ -56,7 +56,7 @@ Comprovar o MVP completo em ambiente reproduzível, empacotar a API e entregar d
 - scripts/dev-up.sh — ambiente local saudável.
 - scripts/test.sh — toda a suíte verde.
 - scripts/validate.sh — validação global e ponta a ponta.
-- Build da imagem pelo procedimento documentado.
+- Build de `backend/Dockerfile` pelo procedimento e contexto documentados.
 - Execução da imagem com PostgreSQL, MinIO e Keycloak locais e externos simulados.
 - scripts/dev-down.sh — parada segura.
 - reset-dev.sh somente em alvo descartável e com confirmação explícita, se executado.
@@ -66,7 +66,7 @@ Comprovar o MVP completo em ambiente reproduzível, empacotar a API e entregar d
 - [ ] Fluxo API ponta a ponta passa com e sem PDF.
 - [ ] Fluxo Telegram simulado passa.
 - [ ] Casos negativos e concorrentes globais passam.
-- [ ] Imagem inicia sem segredos embutidos.
+- [ ] Imagem construída a partir de `backend/Dockerfile` inicia sem segredos embutidos.
 - [ ] OpenAPI permite integrar futuro cliente sem ler código.
 - [ ] Scripts são a única interface operacional mutável documentada.
 - [ ] Documentação distingue Current, Planned e limitações pré-lançamento.
