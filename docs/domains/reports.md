@@ -16,6 +16,19 @@ Controlar a solicitação, o processamento, o resultado e o histórico dos relat
 
 As estruturas exatas de saída e os prompts ainda serão definidos. Os três tipos serão controlados internamente e não serão editáveis pelo usuário.
 
+## Estados
+
+| Estado | Significado |
+| --- | --- |
+| `PENDING` | Aceito e aguardando o worker |
+| `PROCESSING` | Selecionado e em processamento |
+| `COMPLETED` | Conteúdo gerado e persistido com sucesso |
+| `FAILED` | Processamento encerrado sem sucesso após as tentativas permitidas |
+
+A entrega pelo Telegram não altera o estado do processamento. Um relatório continua `COMPLETED` mesmo quando sua notificação ou seu arquivo não puderem ser entregues pelo canal.
+
+Cancelamento não faz parte do MVP.
+
 ## Entrada
 
 Cada solicitação poderá conter:
@@ -24,7 +37,7 @@ Cada solicitação poderá conter:
 - um único PDF opcional;
 - PDF com no máximo 10 MB e 50 páginas.
 
-Imagens, áudio, múltiplos PDFs e OCR não fazem parte do MVP.
+O texto do PDF será extraído com Apache PDFBox. Imagens, áudio, múltiplos PDFs e OCR não fazem parte do MVP.
 
 Tamanho, quantidade de páginas e formato precisam ser validados antes de reservar cota e agendar processamento.
 
@@ -46,12 +59,13 @@ A geração de arquivos PDF de saída não faz parte desta versão.
 3. O sistema recebe e valida a descrição e o PDF opcional.
 4. O arquivo de entrada é armazenado no MinIO.
 5. Uma unidade de cota é reservada de forma atômica.
-6. A solicitação é registrada para processamento assíncrono.
-7. O worker agendado seleciona e bloqueia um trabalho pendente no PostgreSQL.
-8. O worker prepara o contexto e executa o agente correspondente por meio do Spring AI.
-9. Métricas de processamento e resultado são persistidos.
-10. No sucesso, a reserva é confirmada como consumo.
-11. O resumo e o arquivo completo são entregues pelo Telegram.
+6. O relatório é criado em `PENDING`.
+7. O worker agendado seleciona e bloqueia o trabalho no PostgreSQL.
+8. O relatório muda para `PROCESSING`.
+9. O worker prepara o contexto e executa o agente por meio do Spring AI.
+10. Métricas e resultado são persistidos.
+11. No sucesso, o relatório muda para `COMPLETED` e a reserva vira consumo.
+12. O resultado é encaminhado para entrega pelo Telegram.
 
 ## Persistência e recuperação
 
@@ -59,15 +73,15 @@ A solicitação aceita deve sobreviver ao reinício da aplicação. O PostgreSQL
 
 O bloqueio no banco deve impedir processamento duplicado quando houver mais de uma execução ou instância.
 
-A política para recuperar um trabalho interrompido depois de iniciar o processamento ainda será definida.
+Um trabalho em `PROCESSING` por mais de 30 minutos voltará para `PENDING`. O limite será configurável. A recuperação contará como nova tentativa e precisa ser registrada para diagnóstico.
 
 ## Falhas e repetição
 
 Em falha de processamento, o sistema fará uma tentativa automática adicional.
 
 - se a segunda tentativa concluir, a cota é consumida normalmente;
-- se a segunda tentativa também falhar por motivo técnico, a reserva é liberada;
-- a falha e suas tentativas permanecem registradas para diagnóstico;
+- se a segunda tentativa também falhar por motivo técnico, o relatório muda para `FAILED` e a reserva é liberada;
+- a falha e suas tentativas permanecem registradas;
 - não haverá repetição indefinida.
 
 Erros causados por entrada inválida devem ser rejeitados antes da reserva sempre que possível. A classificação completa entre falha técnica e falha atribuível à entrada ainda será definida.
