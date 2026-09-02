@@ -12,7 +12,7 @@ Armazenar os arquivos de entrada e saída dos relatórios sem transferir conteú
 
 O MVP usará um único bucket privado.
 
-Os objetos serão organizados conceitualmente por conta e relatório:
+Os objetos definitivos serão organizados conceitualmente por conta e relatório:
 
 `accounts/{accountId}/reports/{reportId}/`
 
@@ -23,12 +23,27 @@ Dentro desse prefixo poderão existir:
 
 Os nomes físicos exatos poderão incluir identificadores internos, mas não deverão depender do nome enviado pelo usuário.
 
+## Upload temporário
+
+Como PostgreSQL e MinIO não compartilham uma transação, o PDF será inicialmente enviado para uma área temporária controlada pela aplicação.
+
+Fluxo planejado:
+
+1. receber e validar formato, tamanho e páginas;
+2. armazenar o PDF em prefixo temporário;
+3. reservar cota e criar o relatório em transação no PostgreSQL;
+4. associar e organizar o objeto no prefixo definitivo do relatório;
+5. remover o temporário caso a operação de negócio falhe.
+
+Uma rotina de limpeza removerá temporários abandonados por falhas ou interrupções. O tempo para considerar um temporário abandonado ainda será definido.
+
 ## Responsabilidades
 
 - MinIO mantém o conteúdo binário.
 - PostgreSQL mantém metadados, referências e estado dos arquivos.
 - A aplicação autoriza leitura e escrita.
 - Telegram não recebe acesso direto permanente ao bucket.
+- Compensações da aplicação tratam inconsistências entre banco e armazenamento.
 
 ## Segurança
 
@@ -38,6 +53,12 @@ Os nomes físicos exatos poderão incluir identificadores internos, mas não dev
 - nome e caminho fornecidos pelo usuário não serão usados diretamente como chave;
 - tipo, tamanho e quantidade de páginas serão validados antes do processamento.
 
+## Retenção
+
+Não haverá exclusão pelo usuário nem remoção automática no MVP. Arquivos serão mantidos enquanto a conta estiver ativa.
+
+Essa política deverá ser revisada antes do lançamento público.
+
 ## Limites do MVP
 
 - um único PDF de entrada por relatório;
@@ -46,5 +67,3 @@ Os nomes físicos exatos poderão incluir identificadores internos, mas não dev
 - sem versionamento funcional de arquivos;
 - sem bucket individual por conta;
 - sem URLs públicas permanentes.
-
-A política de retenção e exclusão dos arquivos ainda não foi definida.
