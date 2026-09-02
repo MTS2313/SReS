@@ -45,7 +45,20 @@ Serão configurações externas:
 
 Não haverá edição de prompt pelo banco de dados ou por endpoint administrativo no MVP.
 
-O modelo inicial específico ainda será escolhido considerando o hardware disponível e a qualidade necessária.
+## Escolha do modelo
+
+O modelo específico não será fixado antes de testar o hardware real.
+
+A escolha será feita por benchmark considerando:
+
+- qualidade nos três tipos de relatório;
+- aderência às instruções e ao Markdown esperado;
+- latência;
+- uso de RAM e VRAM;
+- tamanho de contexto necessário para os PDFs aceitos;
+- métricas retornadas pela integração.
+
+O usuário não escolherá o modelo ao solicitar um relatório. Trocar o modelo será uma decisão de configuração operacional.
 
 ## Contexto enviado
 
