@@ -25,6 +25,7 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - [Integração com Ollama](integrations/ollama.md)
 - [Integração com MinIO](integrations/minio.md)
 - [ADR-001: Spring Modulith](decisions/ADR-001-spring-modulith.md)
+- [Specifications — API MVP](specifications/tasks/api-mvp/README.md)
 
 ## Escopo inicial
 
