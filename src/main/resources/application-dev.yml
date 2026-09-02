@@ -1,0 +1,10 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+sres:
+  integrations:
+    ollama:
+      enabled: false
+    telegram:
+      enabled: false
