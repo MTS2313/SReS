@@ -16,6 +16,7 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 
 - [Visão do produto](product/overview.md)
 - [Arquitetura do backend](architecture/backend.md)
+- [Contrato da API](architecture/api.md)
 - [Contas](domains/accounts.md)
 - [Relatórios](domains/reports.md)
 - [Cotas e custos](domains/quotas-and-costs.md)
@@ -29,9 +30,11 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - Java 21 e Maven;
 - API em monólito modular com Spring Modulith;
 - endpoints sob `/api/v1`, identificadores UUID e erros em Problem Details;
+- criação por API autenticada ou Telegram usando o mesmo caso de uso;
 - autenticação e identidade gerenciadas pelo Keycloak;
 - provisionamento local no primeiro acesso autenticado;
 - vinculação individual e segura com Telegram;
+- bot interno usando long polling;
 - três tipos fixos de relatório;
 - entrada por texto e, opcionalmente, um PDF de até 10 MB e 50 páginas;
 - extração textual com Apache PDFBox, sem OCR;
@@ -40,6 +43,7 @@ A ausência de frontend nesta fase não significa que o produto final será lan�
 - cota semanal por conta, renovada segunda-feira no fuso `America/Sao_Paulo`;
 - registro de tokens, duração e custo técnico estimado;
 - migrations com Flyway e validação do schema pelo Hibernate;
+- logs estruturados, correlation ID e Spring Boot Actuator;
 - documentação OpenAPI;
 - endpoints administrativos mínimos protegidos pela role `ADMIN`.
 
