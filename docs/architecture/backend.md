@@ -27,6 +27,7 @@ A aplicação será um monólito modular com Spring Modulith. A decisão e suas 
 | Identidade e autenticação | Keycloak |
 | Inferência local | Ollama |
 | Contrato HTTP | OpenAPI |
+| Saúde e métricas | Spring Boot Actuator |
 
 O projeto deverá incluir Maven Wrapper para reduzir dependência da versão de Maven instalada na máquina de execução.
 
@@ -45,12 +46,30 @@ Os módulos serão orientados às responsabilidades do produto, inicialmente:
 
 Cada módulo encapsulará entidades, repositórios e detalhes internos. Comunicação entre módulos ocorrerá por contratos explícitos. Um módulo não deverá manipular diretamente entidades ou repositórios internos de outro.
 
-Spring Modulith será usado para verificar limites e dependências. Isso não implica transformar cada módulo em microsserviço nem exige eventos internos para interações simples.
+Spring Modulith será usado para verificar limites e dependências. Isso não implica transformar cada módulo em microsserviço.
+
+## Interações entre módulos
+
+Operações que precisam responder imediatamente ou manter uma única transação usarão chamadas por contratos explícitos. Isso inclui:
+
+- localizar ou provisionar a conta;
+- validar e reservar cota;
+- criar a solicitação de relatório;
+- armazenar referências de arquivos.
+
+Eventos do Spring Modulith serão usados apenas depois de mudanças relevantes no processamento, inicialmente:
+
+- relatório concluído;
+- relatório falho.
+
+O módulo Telegram poderá reagir a esses eventos para entregar resultado ou informar falha. O domínio de relatórios não conhecerá detalhes do canal.
+
+Não haverá comunicação exclusivamente por eventos nem eventos para cada operação interna.
 
 ## Componentes planejados
 
 - API para contas, vinculação com Telegram, relatórios, cotas, custos e administração;
-- bot do Telegram como adaptador de entrada e entrega;
+- bot Telegram embutido na aplicação e executado por long polling;
 - worker interno para buscar e processar trabalhos pendentes;
 - integração Spring AI com o Ollama;
 - Apache PDFBox para extrair texto de PDFs sem OCR;
@@ -82,15 +101,28 @@ A operação precisa ser idempotente e usar o identificador estável do usuário
 
 ## Contrato da API
 
-A API seguirá estas convenções:
+A API seguirá as decisões registradas em [Contrato da API](api.md), incluindo:
 
 - prefixo `/api/v1`;
 - UUID como identificador externo;
 - paginação em coleções;
-- erros HTTP no formato Problem Details definido pela RFC 9457;
-- contrato OpenAPI desde a primeira versão.
+- criação de relatório com `multipart/form-data`;
+- download autenticado pela API;
+- erros Problem Details conforme RFC 9457;
+- contrato OpenAPI.
 
-Esse contrato servirá ao Telegram, às operações técnicas e ao futuro cliente web ou mobile. A documentação da API não deve antecipar decisões visuais ou tecnologia do frontend.
+Telegram e HTTP usam os mesmos serviços de aplicação. O bot não faz chamadas HTTP contra a própria aplicação.
+
+## Observabilidade
+
+A primeira versão terá:
+
+- logs estruturados;
+- correlation ID por requisição;
+- propagação do correlation ID nos fluxos assíncronos quando aplicável;
+- endpoints de saúde e métricas com Spring Boot Actuator.
+
+Os endpoints operacionais não devem ficar expostos publicamente sem controle. Prometheus, Grafana e tracing distribuído não fazem parte da infraestrutura obrigatória do MVP.
 
 ## Separação de responsabilidades
 
@@ -98,8 +130,8 @@ Esse contrato servirá ao Telegram, às operações técnicas e ao futuro client
 - A aplicação mantém os dados de negócio associados ao identificador do usuário no Keycloak.
 - PostgreSQL mantém metadados e estados; não armazena o conteúdo binário dos PDFs.
 - MinIO mantém arquivos em bucket privado e a aplicação conserva as referências necessárias.
-- Ollama executa os modelos, mas não é fonte de verdade para relatórios, consumo ou custos.
-- Telegram traduz interações do usuário para operações da aplicação; regras de negócio não ficam presas ao bot.
+- Ollama executa o modelo compartilhado, mas não é fonte de verdade para relatórios, consumo ou custos.
+- Telegram traduz interações do usuário para casos de uso da aplicação; regras de negócio não ficam presas ao bot.
 
 ## Segurança mínima
 
@@ -112,6 +144,6 @@ Esse contrato servirá ao Telegram, às operações técnicas e ao futuro client
 ## Questões ainda abertas
 
 - dependências exatas permitidas entre os módulos;
-- modelo Ollama associado a cada tipo de relatório;
+- modelo Ollama inicial;
 - política de retenção dos arquivos;
 - tecnologia da futura interface.
