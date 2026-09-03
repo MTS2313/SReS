@@ -2,7 +2,7 @@
 
 ## Estado da iniciativa
 
-- Estado: needs_correction
+- Estado: ready
 - Branch-base: main
 - Última revisão: 2026-09-02
 
@@ -24,8 +24,8 @@ Para cada task, ler também os documentos de domínio e integração indicados n
 
 | Ordem | Task | Estado | Dependências |
 |---|---|---|---|
-| 1 | [TASK-001 — Bootstrap e infraestrutura](task-001-bootstrap-infraestrutura.md) | needs_correction | Nenhuma |
-| 2 | [TASK-002 — Identidade, contas e planos](task-002-identidade-contas-planos.md) | planned | TASK-001 |
+| 1 | [TASK-001 — Bootstrap e infraestrutura](task-001-bootstrap-infraestrutura.md) | approved | Nenhuma |
+| 2 | [TASK-002 — Identidade, contas e planos](task-002-identidade-contas-planos.md) | ready | TASK-001 |
 | 3 | [TASK-003 — Cotas, custos e administração](task-003-cotas-custos-administracao.md) | planned | TASK-002 |
 | 4 | [TASK-004 — Entrada de relatórios e armazenamento](task-004-entrada-relatorios-armazenamento.md) | planned | TASK-003 |
 | 5 | [TASK-005 — Processamento e Ollama](task-005-processamento-ollama.md) | planned | TASK-004 |
@@ -46,7 +46,7 @@ Cada task exige TDD:
 5. refatoração;
 6. scripts/test.sh e scripts/validate.sh.
 
-A TASK-001 possui implementação inicial, mas precisa da correção estrutural aprovada para colocar o projeto Spring em `backend/`. Os scripts operacionais permanecem na raiz. A TASK-002 só poderá ficar `ready` após a correção ser revisada e aceita.
+A TASK-001 foi aceita após revisão técnica, incluindo a correção estrutural do projeto Spring em `backend/`. Os scripts operacionais permanecem na raiz. A TASK-002 é a única task liberada para execução; TASK-003 e posteriores continuam `planned`.
 
 ## Resultado global esperado
 

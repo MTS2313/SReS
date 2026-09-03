@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.**
+**Atual — implementação da TASK-002.**
 
 ## Objetivo
 

@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.** Não existe implementação no repositório.
+**Atual — TASK-002 implementada.** A API de identidade, contas e planos está implementada; os domínios das tasks seguintes permanecem planejados.
 
 ## Objetivo
 

@@ -2,7 +2,7 @@
 
 ## Estado
 
-needs_correction
+approved
 
 ## Dependências
 

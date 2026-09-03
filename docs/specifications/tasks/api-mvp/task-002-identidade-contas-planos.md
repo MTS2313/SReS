@@ -2,7 +2,7 @@
 
 ## Estado
 
-planned
+ready
 
 ## Dependências
 

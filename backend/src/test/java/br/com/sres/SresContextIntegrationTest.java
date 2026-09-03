@@ -15,7 +15,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE, properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration",
         "spring.jpa.hibernate.ddl-auto=validate",
         "sres.integrations.ollama.enabled=false",
         "sres.integrations.telegram.enabled=false"
@@ -47,7 +46,6 @@ class SresContextIntegrationTest {
 
     @Value("${spring.jpa.hibernate.ddl-auto}")
     String ddlAuto;
-
     @Test
     void startsWithPostgresFlywayAndJpaValidationAndOptionalIntegrationsOff() {
         assertThat(jdbcTemplate.queryForObject(
