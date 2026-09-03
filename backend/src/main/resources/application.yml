@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/sres}
     username: ${SPRING_DATASOURCE_USERNAME:sres_dev}
-    password: ${SPRING_DATASOURCE_PASSWORD:sres_dev_only}
+    password: ${SPRING_DATASOURCE_PASSWORD:change-me-development-only}
   jpa:
     hibernate:
       ddl-auto: validate
