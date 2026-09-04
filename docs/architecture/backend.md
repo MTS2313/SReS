@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Current — fundação da TASK-001.** A aplicação Spring Boot executável está em `backend/`; os domínios de negócio permanecem nas tasks seguintes.
+**Current — TASK-008 validada.** A aplicação Spring Boot executável está em `backend/`, com contratos transversais, integrações do MVP, empacotamento multi-stage e operação documentada.
 
 ## Direção
 
@@ -121,6 +121,8 @@ A primeira versão terá:
 - correlation ID por requisição;
 - propagação do correlation ID nos fluxos assíncronos quando aplicável;
 - endpoints de saúde e métricas com Spring Boot Actuator.
+
+O header HTTP `X-Correlation-ID` é aceito quando contém somente caracteres seguros, gerado quando ausente ou inválido e devolvido nas respostas. Erros HTTP usam Problem Details RFC 9457 sem detalhes internos.
 
 Os endpoints operacionais não devem ficar expostos publicamente sem controle. Prometheus, Grafana e tracing distribuído não fazem parte da infraestrutura obrigatória do MVP.
 

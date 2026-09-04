@@ -1,7 +1,5 @@
 package br.com.sres.accounts;
 
-import br.com.sres.plans.PlanAssignmentRequest;
-import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -29,9 +27,4 @@ public class AdminAccountController {
         return accounts.unblock(id, actor.getSubject(), null);
     }
 
-    @PutMapping("/{id}/plan")
-    public AccountResponse assignPlan(@PathVariable UUID id, @Valid @RequestBody PlanAssignmentRequest request,
-                                      @AuthenticationPrincipal Jwt actor) {
-        return accounts.assignPlan(id, request.planId(), actor.getSubject(), request.reason());
-    }
 }

@@ -2,7 +2,9 @@
 
 ## Estado
 
-planned
+approved
+
+Resultado: OBJECTIVE_COMPLETE
 
 ## Dependências
 

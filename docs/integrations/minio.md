@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.**
+**Atual — armazenamento de entrada e saída implementado; limpeza de temporários validada na TASK-007.**
 
 ## Objetivo
 

@@ -1,0 +1,4 @@
+Você é o agente de análise detalhada do SReS. Gere somente Markdown estruturado.
+Tipo: {{report_type}}
+Descrição: {{description}}
+Texto extraído: {{extracted_text}}

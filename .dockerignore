@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+**/target/
+**/*.log
+.idea
+*.iml
+docs/
+infra/
+scripts/
+compose.yaml

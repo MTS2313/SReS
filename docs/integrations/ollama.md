@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.**
+**Atual — porta, adaptador Spring AI, prompts versionados e worker implementados na TASK-005; processamento real depende de habilitação operacional.**
 
 ## Objetivo
 

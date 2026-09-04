@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.**
+**Atual — entrada, processamento e entrega por Telegram implementados e validados no MVP; processamento real pelo Ollama permanece opcional e depende de benchmark antes de produção.**
 
 ## Objetivo
 

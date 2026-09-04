@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Planejado.**
+**Atual — TASK-006 implementada.**
 
 ## Papel no MVP
 
@@ -17,6 +17,8 @@ O MVP usará long polling.
 Essa escolha evita configurar webhook público, mas impõe uma restrição operacional: inicialmente apenas uma instância ativa deverá executar o polling. Caso a API seja escalada horizontalmente, será necessário garantir um único poller ativo ou separar essa responsabilidade.
 
 Webhook e suporte simultâneo aos dois modos estão fora do MVP.
+
+O poller é habilitado somente com `SRES_TELEGRAM_ENABLED=true` e exige `SRES_TELEGRAM_TOKEN` no ambiente. Sem essa configuração a aplicação inicia com o adaptador desabilitado. A estratégia suporta um único poller por instância; não há coordenação distribuída nesta task.
 
 Cada `update_id` processado será registrado de forma única. Se o Telegram reenviar a mesma atualização, a aplicação não repetirá a ação nem consumirá nova cota.
 

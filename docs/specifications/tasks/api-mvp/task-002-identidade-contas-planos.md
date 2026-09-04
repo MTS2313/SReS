@@ -2,7 +2,7 @@
 
 ## Estado
 
-ready
+approved
 
 ## Dependências
 

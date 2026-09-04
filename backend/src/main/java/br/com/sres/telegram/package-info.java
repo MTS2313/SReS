@@ -1,2 +1,2 @@
-@org.springframework.modulith.ApplicationModule
+@org.springframework.modulith.ApplicationModule(allowedDependencies = {"accounts", "reports", "processing", "storage"})
 package br.com.sres.telegram;

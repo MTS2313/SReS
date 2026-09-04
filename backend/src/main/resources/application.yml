@@ -14,6 +14,9 @@ spring:
   ai:
     ollama:
       base-url: ${SRES_OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${SRES_OLLAMA_MODEL:qwen3.5:4b}
       init:
         pull-model-strategy: never
   security:
@@ -23,11 +26,26 @@ spring:
           issuer-uri: ${SRES_KEYCLOAK_ISSUER:http://localhost:8080/realms/sres-dev}
 
 sres:
+  cost:
+    value-per-million-tokens: ${SRES_COST_VALUE_PER_MILLION_TOKENS:0}
+  storage:
+    endpoint: ${SRES_STORAGE_ENDPOINT:http://localhost:9000}
+    access-key: ${SRES_STORAGE_ACCESS_KEY:minio_dev}
+    secret-key: ${SRES_STORAGE_SECRET_KEY:change-me-development-only}
+    bucket: ${SRES_STORAGE_BUCKET:sres-reports}
+    cleanup-interval-ms: ${SRES_STORAGE_CLEANUP_INTERVAL_MS:3600000}
   integrations:
     ollama:
       enabled: ${SRES_OLLAMA_ENABLED:false}
     telegram:
       enabled: ${SRES_TELEGRAM_ENABLED:false}
+  telegram:
+    poll-interval-ms: ${SRES_TELEGRAM_POLL_INTERVAL_MS:1000}
+  processing:
+    enabled: ${SRES_PROCESSING_ENABLED:false}
+    interval-ms: ${SRES_PROCESSING_INTERVAL_MS:1000}
+    initial-delay-ms: ${SRES_PROCESSING_INITIAL_DELAY_MS:1000}
+    recovery-minutes: ${SRES_PROCESSING_RECOVERY_MINUTES:30}
 
 management:
   endpoints:

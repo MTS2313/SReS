@@ -39,11 +39,11 @@ Documentos de produto e arquitetura que permanecem como referência:
 
 ## Evidências do estado atual
 
-- `pom.xml`, `mvnw`, `.mvn/` e `src/` existem atualmente na raiz e formam o projeto Spring implementado pela TASK-001.
+- `backend/pom.xml`, `backend/mvnw`, `backend/.mvn/` e `backend/src/` formam o projeto Spring implementado pela TASK-001.
 - `compose.yaml`, `infra/`, `.env.example` e `scripts/` existem na raiz e funcionam como recursos operacionais compartilhados.
-- `scripts/test.sh` e `scripts/validate.sh` assumem atualmente que o Maven Wrapper e o código também estão na raiz.
-- `docs/specifications` contém o pacote `api-mvp`; a TASK-001 volta para `needs_correction` até a reorganização ser validada.
-- A documentação viva ainda descreve a fundação como planejada e deverá ser atualizada pela correção somente onde houver evidência de implementação.
+- `scripts/test.sh` e `scripts/validate.sh` localizam o repositório e executam o Maven Wrapper dentro de `backend/`.
+- `docs/specifications` contém o pacote `api-mvp`; as oito tasks foram aceitas após validação técnica.
+- A documentação viva descreve a fundação, os domínios, as integrações e a entrega operacional conforme a implementação comprovada; funcionalidades fora do MVP permanecem futuras.
 
 ## Decisões aprovadas
 
@@ -201,19 +201,19 @@ Fornecer Dockerfile, configuração por ambiente, documentação de execução, 
 
 ## Critérios de aceite
 
-- [ ] AC-001 — Projeto em `backend/` compila em Java 21, módulos são verificados e o ambiente local sobe pelos scripts da raiz.
-- [ ] AC-002 — Keycloak autentica USER e ADMIN e o provisionamento local é idempotente.
-- [ ] AC-003 — Contas e planos cumprem estado, padrão, inativação e bloqueio.
-- [ ] AC-004 — Cota resiste à concorrência, renova, ajusta e reseta com auditoria.
-- [ ] AC-005 — PDF e objetos MinIO cumprem validação, privacidade, compensação e limpeza.
-- [ ] AC-006 — API cria com 202, respeita idempotência, propriedade, paginação e download.
-- [ ] AC-007 — Worker conclui, repete, falha, recupera e atualiza a alocação correta.
-- [ ] AC-008 — Três agentes geram Markdown pelo adaptador Ollama e registram métricas.
-- [ ] AC-009 — Telegram vincula, persiste conversa, deduplica e entrega com retries.
-- [ ] AC-010 — ADMIN acessa funções internas e USER não vê custos ou recursos alheios.
-- [ ] AC-011 — Problem Details, correlation ID, logs, OpenAPI e Actuator estão validados.
-- [ ] AC-012 — Suíte TDD, integração e ponta a ponta passa por scripts repetíveis.
-- [ ] AC-013 — Dockerfile e documentação permitem executar a API sem adivinhações.
+- [x] AC-001 — Projeto em `backend/` compila em Java 21, módulos são verificados e o ambiente local sobe pelos scripts da raiz.
+- [x] AC-002 — Keycloak autentica USER e ADMIN e o provisionamento local é idempotente.
+- [x] AC-003 — Contas e planos cumprem estado, padrão, inativação e bloqueio.
+- [x] AC-004 — Cota resiste à concorrência, renova, ajusta e reseta com auditoria.
+- [x] AC-005 — PDF e objetos MinIO cumprem validação, privacidade, compensação e limpeza.
+- [x] AC-006 — API cria com 202, respeita idempotência, propriedade, paginação e download.
+- [x] AC-007 — Worker conclui, repete, falha, recupera e atualiza a alocação correta.
+- [x] AC-008 — Três agentes geram Markdown pelo adaptador Ollama e registram métricas.
+- [x] AC-009 — Telegram vincula, persiste conversa, deduplica e entrega com retries.
+- [x] AC-010 — ADMIN acessa funções internas e USER não vê custos ou recursos alheios.
+- [x] AC-011 — Problem Details, correlation ID, logs, OpenAPI e Actuator estão validados.
+- [x] AC-012 — Suíte TDD, integração e ponta a ponta passa por scripts repetíveis.
+- [x] AC-013 — Dockerfile e documentação permitem executar a API sem adivinhações.
 
 ## Definição de pronto
 

@@ -2,9 +2,9 @@
 
 ## Estado da iniciativa
 
-- Estado: ready
+- Estado: completed
 - Branch-base: main
-- Última revisão: 2026-09-02
+- Última revisão: 2026-09-04
 
 ## Objetivo
 
@@ -25,13 +25,13 @@ Para cada task, ler também os documentos de domínio e integração indicados n
 | Ordem | Task | Estado | Dependências |
 |---|---|---|---|
 | 1 | [TASK-001 — Bootstrap e infraestrutura](task-001-bootstrap-infraestrutura.md) | approved | Nenhuma |
-| 2 | [TASK-002 — Identidade, contas e planos](task-002-identidade-contas-planos.md) | ready | TASK-001 |
-| 3 | [TASK-003 — Cotas, custos e administração](task-003-cotas-custos-administracao.md) | planned | TASK-002 |
-| 4 | [TASK-004 — Entrada de relatórios e armazenamento](task-004-entrada-relatorios-armazenamento.md) | planned | TASK-003 |
-| 5 | [TASK-005 — Processamento e Ollama](task-005-processamento-ollama.md) | planned | TASK-004 |
-| 6 | [TASK-006 — Telegram](task-006-telegram.md) | planned | TASK-005 |
-| 7 | [TASK-007 — Observabilidade e robustez](task-007-observabilidade-robustez.md) | planned | TASK-006 |
-| 8 | [TASK-008 — Validação ponta a ponta](task-008-validacao-ponta-a-ponta.md) | planned | TASK-007 |
+| 2 | [TASK-002 — Identidade, contas e planos](task-002-identidade-contas-planos.md) | approved | TASK-001 |
+| 3 | [TASK-003 — Cotas, custos e administração](task-003-cotas-custos-administracao.md) | approved | TASK-002 |
+| 4 | [TASK-004 — Entrada de relatórios e armazenamento](task-004-entrada-relatorios-armazenamento.md) | approved | TASK-003 |
+| 5 | [TASK-005 — Processamento e Ollama](task-005-processamento-ollama.md) | approved | TASK-004 |
+| 6 | [TASK-006 — Telegram](task-006-telegram.md) | approved | TASK-005 |
+| 7 | [TASK-007 — Observabilidade e robustez](task-007-observabilidade-robustez.md) | approved | TASK-006 |
+| 8 | [TASK-008 — Validação ponta a ponta](task-008-validacao-ponta-a-ponta.md) | approved | TASK-007 |
 
 ## Regra de avanço
 
@@ -46,7 +46,7 @@ Cada task exige TDD:
 5. refatoração;
 6. scripts/test.sh e scripts/validate.sh.
 
-A TASK-001 foi aceita após revisão técnica, incluindo a correção estrutural do projeto Spring em `backend/`. Os scripts operacionais permanecem na raiz. A TASK-002 é a única task liberada para execução; TASK-003 e posteriores continuam `planned`.
+A TASK-001, a TASK-002, a TASK-003, a TASK-004, a TASK-005, a TASK-006, a TASK-007 e a TASK-008 foram aceitas após revisão técnica. A iniciativa API MVP está concluída com resultado OBJECTIVE_COMPLETE; não há tasks restantes nesta iniciativa.
 
 ## Resultado global esperado
 
@@ -55,4 +55,4 @@ A TASK-001 foi aceita após revisão técnica, incluindo a correção estrutural
 - Telegram e Ollama ativáveis por configuração.
 - Segurança, concorrência, idempotência, armazenamento e auditoria testados.
 - OpenAPI, Dockerfile e documentação operacional atualizados.
-- Todas as tasks aceitas com evidências.
+- Todas as oito tasks aceitas com evidências; resultado final OBJECTIVE_COMPLETE.

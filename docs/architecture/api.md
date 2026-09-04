@@ -2,7 +2,7 @@
 
 ## Estado
 
-**Atual — TASK-002 implementada.** A API de identidade, contas e planos está implementada; os domínios das tasks seguintes permanecem planejados.
+**Atual — MVP validado até a TASK-008.** A API de identidade, contas, planos, uso, custos, entrada, armazenamento, processamento, Telegram e contratos operacionais está implementada conforme o escopo atual; Telegram e Ollama permanecem opcionais e desabilitados por padrão.
 
 ## Objetivo
 
@@ -121,6 +121,8 @@ Não haverá URL pública permanente, armazenamento do Markdown completo no Post
 ## Erros e rastreabilidade
 
 Cada requisição terá um correlation ID. O identificador será propagado nos logs e poderá ser retornado em respostas de erro para facilitar diagnóstico, sem expor detalhes internos sensíveis.
+
+O header utilizado é `X-Correlation-ID`; valores seguros recebidos são preservados e, nos demais casos, um UUID é gerado. Erros são retornados como `application/problem+json` com `type`, `title`, `status`, `detail`, `instance` e `correlationId`. O Actuator expõe somente `health` e `info`.
 
 Erros de validação, autenticação, autorização, bloqueio, cota esgotada, recurso inexistente e conflito devem ser representados de forma consistente por Problem Details. O catálogo definitivo de códigos ainda será definido.
 
