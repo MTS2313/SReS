@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./sres-common
+source "$SCRIPT_DIR/sres-common"
+
+[[ "$#" -eq 1 ]] || die "uso: sres-deploy <git-sha-40-hex>"
+validate_sha "$1"
+load_deploy_env
+validate_config
+with_deploy_lock
+
+new_sha="${1,,}"
+old_sha="$(read_release current || true)"
+new_image="${SRES_API_IMAGE}:$new_sha"
+
+log "Iniciando deploy da release $new_sha"
+deploy_failed=0
+if ! SRES_API_IMAGE="$new_image" compose pull api; then
+  deploy_failed=1
+elif ! SRES_API_IMAGE="$new_image" compose up -d api; then
+  deploy_failed=1
+fi
+
+if (( deploy_failed )); then
+  log "Falha ao obter ou iniciar a release $new_sha" >&2
+  [[ -n "$old_sha" ]] || die "não existe release anterior para rollback automático"
+  log "Tentando rollback automático para $old_sha" >&2
+  SRES_API_IMAGE="${SRES_API_IMAGE}:$old_sha" compose up -d api || die "rollback automático falhou ao iniciar a release anterior"
+  "$SRES_HEALTHCHECK_BIN" || die "rollback automático não ficou saudável"
+  die "deploy falhou; release anterior restaurada"
+fi
+
+if ! SRES_API_IMAGE="$new_image" "$SRES_HEALTHCHECK_BIN"; then
+  log "Release $new_sha não ficou saudável" >&2
+  if [[ -n "$old_sha" ]]; then
+    log "Tentando rollback automático para $old_sha" >&2
+    SRES_API_IMAGE="${SRES_API_IMAGE}:$old_sha" compose up -d api || die "rollback automático falhou ao iniciar a release anterior"
+    "$SRES_HEALTHCHECK_BIN" || die "rollback automático não ficou saudável"
+    die "deploy falhou; release anterior restaurada"
+  fi
+  die "deploy falhou e não existe release anterior para rollback automático"
+fi
+
+if [[ -n "$old_sha" ]]; then
+  write_release previous "$old_sha"
+fi
+write_release current "$new_sha"
+write_history "$new_sha"
+log "Deploy concluído com sucesso: $new_sha"

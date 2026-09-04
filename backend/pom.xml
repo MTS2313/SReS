@@ -23,6 +23,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <pdfbox.version>3.0.6</pdfbox.version>
         <springdoc.version>2.8.13</springdoc.version>
+        <swagger.version>2.2.36</swagger.version>
     </properties>
 
     <dependencyManagement>
@@ -60,6 +61,8 @@
         <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-database-postgresql</artifactId></dependency>
         <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
         <dependency><groupId>org.springdoc</groupId><artifactId>springdoc-openapi-starter-webmvc-ui</artifactId><version>${springdoc.version}</version></dependency>
+        <!-- Spring AI 1.0.2 brings 2.2.30 transitively; align annotations with springdoc's swagger-core 2.2.36. -->
+        <dependency><groupId>io.swagger.core.v3</groupId><artifactId>swagger-annotations-jakarta</artifactId><version>${swagger.version}</version></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.testcontainers</groupId><artifactId>junit-jupiter</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.testcontainers</groupId><artifactId>postgresql</artifactId><scope>test</scope></dependency>

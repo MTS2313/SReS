@@ -28,4 +28,6 @@ Erros HTTP usam Problem Details RFC 9457. O header `X-Correlation-ID` identifica
 
 O fluxo API usa tokens USER/ADMIN emitidos pelo realm `sres-dev` do Keycloak. O usuário comum consulta apenas a própria conta, cota e relatórios; operações administrativas exigem `ADMIN`. O Telegram permanece atrás de `SRES_TELEGRAM_ENABLED=false` e requer token externo somente quando habilitado. O processamento usa `SRES_OLLAMA_ENABLED=false` por padrão e o modelo de desenvolvimento configurável por `SRES_OLLAMA_MODEL` (atualmente `qwen3.5:4b`).
 
+O contrato OpenAPI está disponível em `http://localhost:8081/v3/api-docs`; o Swagger UI fica em `http://localhost:8081/swagger-ui/index.html` e `/swagger-ui.html` redireciona para ele. Use `Authorize` para informar um Bearer JWT de desenvolvimento; não coloque tokens ou credenciais no documento.
+
 Antes de escolher modelo produtivo, execute benchmark comparando qualidade da saída, latência, memória, tokens por segundo, contexto, estabilidade e custo operacional. O smoke anterior do modelo local teve timeout; não há afirmação de modelo produtivo definitivo.

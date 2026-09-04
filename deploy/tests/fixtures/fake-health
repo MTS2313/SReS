@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+count_file="${FAKE_HEALTH_COUNT_FILE:?}"
+count=0
+[[ -f "$count_file" ]] && count="$(<"$count_file")"
+printf '%s\n' "$((count + 1))" > "$count_file"
+IFS=, read -r -a sequence <<< "${FAKE_HEALTH_SEQUENCE:-up}"
+result="${sequence[$count]:-${sequence[-1]}}"
+[[ "$result" == up ]]

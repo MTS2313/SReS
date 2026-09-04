@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./sres-common
+source "$SCRIPT_DIR/sres-common"
+
+if [[ -f "$SRES_DEPLOY_ENV_FILE" ]]; then
+  load_deploy_env
+fi
+
+require_command curl
+validate_positive_integer "$SRES_HEALTH_RETRIES" SRES_HEALTH_RETRIES
+validate_positive_integer "$SRES_HEALTH_TIMEOUT_SECONDS" SRES_HEALTH_TIMEOUT_SECONDS
+validate_positive_integer "$SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS" SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS
+
+deadline=$(( $(date +%s) + SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS ))
+attempt=1
+while (( attempt <= SRES_HEALTH_RETRIES && $(date +%s) <= deadline )); do
+  body_file="$(mktemp)"
+  if curl --silent --show-error --fail --max-time "$SRES_HEALTH_TIMEOUT_SECONDS" "$SRES_HEALTH_URL" -o "$body_file" 2>/dev/null \
+    && tr '\n' ' ' < "$body_file" | grep -Eq '^[:space:]*\{.*"status"[[:space:]]*:[[:space:]]*"UP".*\}[[:space:]]*$'; then
+    rm -f -- "$body_file"
+    log "Healthcheck PASS (tentativa $attempt)"
+    exit 0
+  fi
+  rm -f -- "$body_file"
+  log "Healthcheck ainda não saudável (tentativa $attempt/$SRES_HEALTH_RETRIES)" >&2
+  (( attempt++ ))
+  (( attempt <= SRES_HEALTH_RETRIES )) && sleep "$SRES_HEALTH_INTERVAL_SECONDS"
+done
+
+die "healthcheck não confirmou HTTP 200 com status UP dentro do prazo"

@@ -15,5 +15,5 @@ RUN useradd --system --create-home --home-dir /home/sres --shell /usr/sbin/nolog
 WORKDIR /app
 COPY --from=build --chown=sres:sres /workspace/target/*.jar /app/sres-api.jar
 USER sres
-EXPOSE 8081
+EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/app/sres-api.jar"]

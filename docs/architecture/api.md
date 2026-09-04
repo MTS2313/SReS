@@ -128,4 +128,4 @@ Erros de validação, autenticação, autorização, bloqueio, cota esgotada, re
 
 ## OpenAPI
 
-O OpenAPI será o contrato técnico de integração com o futuro frontend. Ele documentará campos, validações, autenticação, estados e erros, mas não decisões visuais ou tecnologia da interface.
+O OpenAPI é o contrato técnico de integração com frontend, mobile e outros clientes autorizados. Em desenvolvimento, a interface está disponível em `/swagger-ui/index.html` (com redirect por `/swagger-ui.html`) e o documento JSON em `/v3/api-docs`. O botão `Authorize` usa Bearer JWT emitido pelo Keycloak; a documentação pode ser restringida ou desabilitada por ambiente sem alterar a autenticação da API.

@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SRES_ROOT_DIR="${SRES_ROOT_DIR:-/opt/sres}"
+SRES_CONFIG_DIR="${SRES_CONFIG_DIR:-/etc/sres}"
+SRES_DEPLOY_ENV_FILE="${SRES_DEPLOY_ENV_FILE:-$SRES_CONFIG_DIR/deploy.env}"
+SRES_APP_ENV_FILE="${SRES_APP_ENV_FILE:-$SRES_ROOT_DIR/app.env}"
+SRES_STATE_DIR="${SRES_STATE_DIR:-$SRES_ROOT_DIR/releases}"
+SRES_COMPOSE_FILE="${SRES_COMPOSE_FILE:-$SRES_ROOT_DIR/compose.prod.yml}"
+SRES_LOCK_FILE="${SRES_LOCK_FILE:-/var/lock/sres-deploy.lock}"
+SRES_HEALTHCHECK_BIN="${SRES_HEALTHCHECK_BIN:-sres-healthcheck}"
+SRES_DOCKER_BIN="${SRES_DOCKER_BIN:-docker}"
+SRES_COMPOSE_PROJECT="${SRES_COMPOSE_PROJECT:-sres}"
+SRES_API_HOST_PORT="${SRES_API_HOST_PORT:-18080}"
+SRES_HEALTH_URL="${SRES_HEALTH_URL:-http://127.0.0.1:${SRES_API_HOST_PORT}/actuator/health}"
+SRES_HEALTH_RETRIES="${SRES_HEALTH_RETRIES:-12}"
+SRES_HEALTH_INTERVAL_SECONDS="${SRES_HEALTH_INTERVAL_SECONDS:-5}"
+SRES_HEALTH_TIMEOUT_SECONDS="${SRES_HEALTH_TIMEOUT_SECONDS:-5}"
+SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS="${SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS:-120}"
+
+log() {
+  printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"
+}
+
+die() {
+  log "ERRO: $*" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 || die "comando obrigatório ausente: $1"
+}
+
+require_file() {
+  [[ -f "$1" ]] || die "arquivo obrigatório ausente: $1"
+}
+
+validate_sha() {
+  [[ "${1:-}" =~ ^[0-9a-fA-F]{40}$ ]] || die "SHA deve conter exatamente 40 caracteres hexadecimais"
+}
+
+validate_positive_integer() {
+  [[ "${1:-}" =~ ^[1-9][0-9]*$ ]] || die "valor inteiro positivo inválido: $2"
+}
+
+load_deploy_env() {
+  require_file "$SRES_DEPLOY_ENV_FILE"
+  local key value line
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^([A-Z][A-Z0-9_]*)=([^[:space:]]*)$ ]] || die "linha inválida em deploy.env"
+    key="${BASH_REMATCH[1]}"
+    value="${BASH_REMATCH[2]}"
+    case "$key" in
+      SRES_API_IMAGE|SRES_API_HOST_PORT|SRES_KEYCLOAK_HOST_PORT|SRES_COMPOSE_PROJECT|SRES_APP_ENV_FILE|SRES_NETWORK_NAME|SRES_POSTGRES_VOLUME_NAME|SRES_MINIO_VOLUME_NAME|SRES_HEALTH_URL|SRES_HEALTH_RETRIES|SRES_HEALTH_INTERVAL_SECONDS|SRES_HEALTH_TIMEOUT_SECONDS|SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS)
+        printf -v "$key" '%s' "$value"
+        ;;
+      *) die "chave não permitida em deploy.env: $key" ;;
+    esac
+  done < "$SRES_DEPLOY_ENV_FILE"
+  SRES_APP_ENV_FILE="${SRES_APP_ENV_FILE:-$SRES_ROOT_DIR/app.env}"
+  SRES_COMPOSE_PROJECT="${SRES_COMPOSE_PROJECT:-sres}"
+  SRES_HEALTH_URL="${SRES_HEALTH_URL:-http://127.0.0.1:${SRES_API_HOST_PORT:-18080}/actuator/health}"
+}
+
+validate_config() {
+  require_file "$SRES_COMPOSE_FILE"
+  require_file "$SRES_APP_ENV_FILE"
+  [[ "${SRES_API_IMAGE:-}" =~ ^[a-zA-Z0-9._/-]+$ ]] || die "SRES_API_IMAGE deve ser um repositório sem tag"
+  [[ "$SRES_API_IMAGE" != *:* && "$SRES_API_IMAGE" != *@* ]] || die "SRES_API_IMAGE não pode conter tag ou digest"
+  [[ "$SRES_COMPOSE_PROJECT" =~ ^[a-zA-Z0-9][a-zA-Z0-9_-]*$ ]] || die "nome de projeto Compose inválido"
+  validate_positive_integer "$SRES_HEALTH_RETRIES" SRES_HEALTH_RETRIES
+  [[ "$SRES_HEALTH_INTERVAL_SECONDS" =~ ^[0-9]+$ ]] || die "intervalo de healthcheck inválido"
+  validate_positive_integer "$SRES_HEALTH_TIMEOUT_SECONDS" SRES_HEALTH_TIMEOUT_SECONDS
+  validate_positive_integer "$SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS" SRES_HEALTH_GLOBAL_TIMEOUT_SECONDS
+}
+
+compose() {
+  "$SRES_DOCKER_BIN" compose \
+    --project-name "$SRES_COMPOSE_PROJECT" \
+    --env-file "$SRES_DEPLOY_ENV_FILE" \
+    -f "$SRES_COMPOSE_FILE" "$@"
+}
+
+read_release() {
+  local name="$1" file="$SRES_STATE_DIR/$1"
+  if [[ -f "$file" ]]; then
+    local value
+    value="$(<"$file")"
+    validate_sha "$value"
+    printf '%s' "$value"
+  fi
+}
+
+write_release() {
+  local name="$1" value="$2" tmp
+  validate_sha "$value"
+  mkdir -p "$SRES_STATE_DIR"
+  tmp="$(mktemp "$SRES_STATE_DIR/.${name}.XXXXXX")"
+  chmod 600 "$tmp"
+  printf '%s\n' "$value" > "$tmp"
+  mv -f -- "$tmp" "$SRES_STATE_DIR/$name"
+}
+
+write_history() {
+  local sha="$1"
+  mkdir -p "$SRES_STATE_DIR"
+  printf '%s %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$sha" >> "$SRES_STATE_DIR/history.log"
+  chmod 600 "$SRES_STATE_DIR/history.log"
+}
+
+with_deploy_lock() {
+  require_command flock
+  mkdir -p "$(dirname "$SRES_LOCK_FILE")"
+  exec 9>"$SRES_LOCK_FILE"
+  flock -n 9 || die "outro deploy ou rollback já está em execução"
+}

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=./sres-common
+source "$SCRIPT_DIR/sres-common"
+
+[[ "$#" -eq 0 ]] || die "uso: sres-rollback"
+load_deploy_env
+validate_config
+with_deploy_lock
+
+current_sha="$(read_release current || true)"
+previous_sha="$(read_release previous || true)"
+[[ -n "$current_sha" ]] || die "não existe release atual"
+[[ -n "$previous_sha" ]] || die "não existe release anterior para rollback"
+
+log "Iniciando rollback para $previous_sha"
+SRES_API_IMAGE="${SRES_API_IMAGE}:$previous_sha" compose pull api
+SRES_API_IMAGE="${SRES_API_IMAGE}:$previous_sha" compose up -d api
+if ! SRES_API_IMAGE="${SRES_API_IMAGE}:$previous_sha" "$SRES_HEALTHCHECK_BIN"; then
+  die "rollback não ficou saudável; estado current/previous não foi alterado"
+fi
+
+write_release previous "$current_sha"
+write_release current "$previous_sha"
+write_history "$previous_sha"
+log "Rollback concluído com sucesso: $previous_sha"

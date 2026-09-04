@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+printf 'docker %s SRES_API_IMAGE=%s\n' "$*" "${SRES_API_IMAGE:-}" >> "${FAKE_DOCKER_LOG:?}"
+[[ -n "${FAKE_DOCKER_SLEEP:-}" ]] && sleep "$FAKE_DOCKER_SLEEP"
+[[ "${FAKE_DOCKER_PULL_FAIL:-0}" != 1 || "$*" != *' pull '* ]]
+[[ "${FAKE_DOCKER_UP_FAIL:-0}" != 1 || "$*" != *' up '* ]]

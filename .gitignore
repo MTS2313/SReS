@@ -2,3 +2,5 @@
 target/
 .idea/
 *.iml
+deploy/app.env
+deploy/deploy.env
