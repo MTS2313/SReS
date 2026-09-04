@@ -75,7 +75,7 @@ pid $rendered_dir/nginx.pid;
 error_log /dev/stderr;
 events {}
 http {
-  include $rendered_dir/*.conf;
+  include $rendered_dir/sres-*.conf;
 }
 EOF
 }

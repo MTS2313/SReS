@@ -39,6 +39,8 @@ for header in Host X-Real-IP X-Forwarded-For X-Forwarded-Proto; do
   grep -R -Fq "$header" "$DEPLOY_DIR/nginx" || fail "header ausente: $header"
 done
 grep -Fq 'nginx -t' "$DEPLOY_DIR/scripts/sres-nginx-apply" || fail "apply não valida nginx"
+grep -Fq 'include $rendered_dir/sres-*.conf;' "$DEPLOY_DIR/scripts/sres-nginx-common" || fail "configuração standalone inclui arquivos .conf indevidos"
+! grep -Fq 'include $rendered_dir/*.conf;' "$DEPLOY_DIR/scripts/sres-nginx-common" || fail "configuração standalone inclui o próprio nginx.conf"
 grep -Fq 'systemctl reload nginx' "$DEPLOY_DIR/scripts/sres-nginx-apply" || fail "apply não possui reload seguro"
 ! grep -Fq 'systemctl reload nginx' "$DEPLOY_DIR/scripts/sres-nginx-check" || fail "check não pode fazer reload"
 grep -Fq 'visudo -cf' "$ROOT_DIR/deploy/bootstrap.sh" || fail "bootstrap não valida sudoers"
