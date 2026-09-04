@@ -2,34 +2,40 @@
 
 ## Estado
 
-Current: Compose de produção, rede interna, persistência e configuração externa descritos nesta task.
+Current: Compose de produção, rede interna, persistência, bootstrap idempotente e automação Nginx versionada descritos nesta task.
 
 Current: scripts locais de instalação, deploy por SHA, healthcheck HTTP, rollback com lock e estado de releases, CI/GHCR e workflow de solicitação de deploy SSH.
 
-Planned: VPS provisionada, execução remota habilitada, Nginx/TLS, sudoers/SSH efetivos, backups automatizados e healthcheck externo.
+Planned: VPS provisionada, execução remota habilitada, certificados TLS emitidos, sudoers/SSH efetivos, backups automatizados e healthcheck externo.
 
 ## Topologia
 
 ```text
-Nginx no host (futuro)
-  ├── 127.0.0.1:18080 ──► api:8080
-  └── 127.0.0.1:18081 ──► keycloak:8080 (quando publicado pelo Nginx)
+Cloudflare
+  └── Nginx no host (configurado por templates/scripts)
+        ├── api.sres.morfeu.cloud ──► 127.0.0.1:18081 ──► api:8080
+        ├── auth.sres.morfeu.cloud ─► 127.0.0.1:18083 ──► keycloak:8080
+        └── s3.sres.morfeu.cloud ───► 127.0.0.1:18084 ──► minio:9000
 
 api ── sres_internal ── postgres:5432
                     ├── minio:9000
                     └── keycloak:8080
 ```
 
-O Compose cria a rede nomeada `sres_internal`. A API e os serviços persistentes não são publicados diretamente na Internet. API e Keycloak ficam vinculados ao loopback do host para o Nginx futuro; PostgreSQL, API S3 e console MinIO não têm publicação de porta.
+O Compose cria a rede nomeada `sres_internal`. A API, Keycloak e API S3 do MinIO ficam vinculados exclusivamente ao loopback do host; PostgreSQL e console MinIO não têm publicação de porta. Cloudflare e Nginx são a entrada pública.
+
+### Exposição pública e firewall
+
+A VPS deve permitir publicamente somente SSH, TCP 80 e TCP 443. As portas operacionais `18081` (API), `18083` (Keycloak) e `18084` (MinIO S3) são exclusivamente loopback e não devem ser abertas no firewall. PostgreSQL e o console MinIO permanecem sem exposição pública.
 
 ## Serviços
 
 | Serviço | Imagem | Função | Exposição |
 |---|---|---|---|
-| `api` | `${SRES_API_IMAGE}` | API Spring Boot e Flyway | `127.0.0.1:${SRES_API_HOST_PORT}:8080` |
+| `api` | `${SRES_API_IMAGE}` | API Spring Boot e Flyway | `127.0.0.1:18081:8080` |
 | `postgres` | `postgres:17.6` | Banco SReS e schema Keycloak | somente rede interna |
 | `minio` | `minio/minio:RELEASE.2025-09-07T16-13-09Z` | objetos privados | somente rede interna |
-| `keycloak` | `quay.io/keycloak/keycloak:26.3.3` | identidade produtiva | loopback; Nginx futuro |
+| `keycloak` | `quay.io/keycloak/keycloak:26.3.3` | identidade produtiva | `127.0.0.1:18083:8080` |
 
 As versões acompanham as imagens já usadas e validadas no desenvolvimento, evitando upgrade desnecessário nesta task. A imagem da API é externa e versionável; no futuro será publicada no GHCR pela SHA do commit.
 
@@ -54,13 +60,13 @@ Flyway é executado pela API no startup. `ddl-auto=validate` permanece responsab
 
 ## MinIO
 
-MinIO usa bucket privado `sres-reports`, credenciais externas e volume persistente. O console `9001` e a API S3 não são publicados. O `StorageService` cria o bucket de forma idempotente quando a aplicação precisa utilizá-lo; não há bucket público nem job adicional nesta task.
+MinIO usa bucket privado `sres-reports`, credenciais externas e volume persistente. A API S3 é publicada somente em `127.0.0.1:18084:9000` para o Nginx; o console `9001` não é publicado. O `StorageService` cria o bucket de forma idempotente quando a aplicação precisa utilizá-lo.
 
 ## Keycloak
 
 Keycloak usa modo `start`, persistência no schema `keycloak` do PostgreSQL e healthcheck no management port interno 9000. Credenciais administrativas são somente placeholders no exemplo e devem ser fornecidas na VPS.
 
-O Compose não monta nem importa `infra/keycloak/sres-dev-realm.json`. Realm, client, issuer, usuários e roles produtivos serão tratados em procedimento próprio. O `SRES_KEYCLOAK_ISSUER` deve usar o hostname externo estável publicado futuramente pelo Nginx.
+O Compose não monta nem importa `infra/keycloak/sres-dev-realm.json`. Realm, client, issuer, usuários e roles produtivos serão tratados em procedimento próprio. O `SRES_KEYCLOAK_ISSUER` deve ser `https://auth.sres.morfeu.cloud/realms/sres`.
 
 ## API e integrações
 
@@ -81,6 +87,12 @@ Ollama não é serviço do Compose. `SRES_OLLAMA_ENABLED=false` é o padrão. Te
 
 `sres-deploy` e `sres-rollback` serializam operações com `flock`, aceitam somente SHA completa e gravam `current`/`previous` atomicamente dentro de `/opt/sres/releases`. O healthcheck usa `/actuator/health`, HTTP 200 e `status=UP` antes de atualizar o estado. Nenhum fluxo remove volumes ou tenta reverter o schema Flyway. A instalação copia Compose, init SQL, exemplos e scripts, preservando os arquivos reais de configuração.
 
+## Bootstrap e Nginx
+
+`deploy/bootstrap.sh` valida Linux, Docker, Compose, Nginx, portas 18081/18083/18084 e sudoers antes de preparar o host. Cria/valida `sres-deploy`, instala scripts root-owned, preserva envs e aplica os templates `deploy/nginx/` por meio de `sres-nginx-check` e `sres-nginx-apply`. O apply limita-se aos arquivos do SReS, executa `nginx -t` antes de `systemctl reload nginx` e restaura os arquivos SReS em falha.
+
+TLS permanece um procedimento posterior na VPS: Nginx HTTP válido, `nginx -t`, Certbot, HTTPS, novo `nginx -t` e reload. Cloudflare pode responder pelos seus próprios IPs em `dig`; não há automação da API Cloudflare.
+
 ## Workflow de deploy
 
 O workflow `.github/workflows/deploy-production.yml` é disparado por alterações de runtime relevantes em `main` ou manualmente. Ele chama o workflow reutilizável de publicação somente após a validação e usa a SHA completa do commit como release. O job de deploy pertence ao GitHub Environment `production`, é protegido por `PRODUCTION_DEPLOY_ENABLED` e possui concurrency exclusiva sem cancelamento.
@@ -89,8 +101,7 @@ Com a flag habilitada, o workflow configura uma chave privada e `known_hosts` fo
 
 ## Limitações desta etapa
 
-- Não há Nginx ou TLS.
-- Não há bootstrap real, usuário/sudoers ou conexão SSH da VPS; o `bootstrap.sh`/`install.sh` apenas fornece a instalação parametrizável e testável.
+- Não há execução real na VPS, emissão de certificados ou configuração de DNS; esses atos ficam para a TASK-006.
 - Não há backups automatizados nem teste de restauração.
 - Não há limites de CPU/RAM, pois a capacidade da VPS ainda não foi medida.
 - Não há importação de realm produtivo.

@@ -30,7 +30,7 @@ grep -Eq '\bready\b' <<<"$rendered"
 grep -Eq '/dev/tcp/127\.0\.0\.1/9000' <<<"$rendered"
 grep -Eq '/actuator/health|/dev/tcp/127\.0\.0\.1/8080' <<<"$rendered"
 
-for service in postgres minio; do
+for service in postgres; do
   if awk -v service="$service" '
     $0 == "  " service ":" { in_service=1; next }
     in_service && $0 ~ /^  [[:alnum:]_-]+:$/ { in_service=0 }
@@ -41,6 +41,20 @@ for service in postgres minio; do
     exit 4
   fi
 done
+
+awk -v service="minio" '
+  $0 == "  " service ":" { in_service=1; next }
+  in_service && $0 ~ /^  [[:alnum:]_-]+:$/ { in_service=0 }
+  in_service && $0 ~ /^    ports:$/ { found=1 }
+  END { exit found ? 0 : 1 }
+' <<<"$rendered" || {
+  echo "MinIO S3 precisa de publicação loopback para o Nginx" >&2
+  exit 4
+}
+grep -Eq 'host_ip: 127\.0\.0\.1' <<<"$rendered" && grep -Eq 'target: 9000' <<<"$rendered" || {
+  echo "MinIO não está restrito a loopback" >&2
+  exit 4
+}
 
 ! grep -Eq 'sres-dev-realm|start-dev|latest|privileged: true|/var/run/docker.sock' "$COMPOSE_FILE"
 ! grep -Eiq 'password: *[^$].*(change-me|secret|admin)' "$COMPOSE_FILE"

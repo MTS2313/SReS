@@ -5,7 +5,7 @@
 - Estado: ready
 - Branch-base: main
 - API MVP: concluído
-- TASK-001, TASK-002, TASK-003 e TASK-004 foram aprovadas após revisão; TASK-005 é a única task liberada para execução.
+- TASK-001 até TASK-005 foram aprovadas após revisão; TASK-006 é a única task liberada para execução.
 
 ## Leitura obrigatória
 
@@ -24,12 +24,12 @@
 | 2 | [TASK-002 — Scripts da VPS, healthcheck e rollback](task-002-scripts-vps-healthcheck-rollback.md) | approved | TASK-001 |
 | 3 | [TASK-003 — CI backend e publicação GHCR](task-003-ci-ghcr.md) | approved | TASK-001, acesso GHCR |
 | 4 | [TASK-004 — Deploy production via SSH](task-004-deploy-production-ssh.md) | approved | TASK-002, TASK-003, VPS |
-| 5 | [TASK-005 — Nginx/TLS e preparação da VPS](task-005-nginx-tls-vps.md) | ready | TASK-001, TASK-002, TASK-004, DNS |
-| 6 | [TASK-006 — Validação ponta a ponta de deploy](task-006-validacao-deploy.md) | planned | TASK-001 a TASK-005, backups |
+| 5 | [TASK-005 — Nginx/TLS e preparação da VPS](task-005-nginx-tls-vps.md) | approved | TASK-001, TASK-002, TASK-004, DNS |
+| 6 | [TASK-006 — Validação ponta a ponta de deploy](task-006-validacao-deploy.md) | ready | TASK-001 a TASK-005, backups |
 
 ## Regra de avanço
 
-Somente a TASK-005 está liberada (`ready`). TASK-006 permanece `planned` e não deve ser iniciada nesta etapa.
+Somente a TASK-006 está liberada (`ready`). As tasks anteriores, incluindo a TASK-005, foram aprovadas após revisão.
 
 ## Fora do escopo
 

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/sres-nginx-common"
+
+load_deploy_env
+validate_settings
+rendered_dir="$(mktemp -d)"
+trap 'find "$rendered_dir" -type f -delete; rmdir -- "$rendered_dir"' EXIT
+render_all "$rendered_dir"
+grep -Fq 'proxy_set_header Host' "$rendered_dir/sres-api.conf" || die "header Host ausente na API"
+grep -Fq 'client_max_body_size 16m' "$rendered_dir/sres-api.conf" || die "limite de upload ausente"
+grep -Fq 'proxy_pass http://127.0.0.1:' "$rendered_dir/sres-api.conf" || die "upstream API inválido"
+grep -Fq 'proxy_pass http://127.0.0.1:' "$rendered_dir/sres-auth.conf" || die "upstream Keycloak inválido"
+grep -Fq 'proxy_pass http://127.0.0.1:' "$rendered_dir/sres-s3.conf" || die "upstream MinIO inválido"
+if command -v "$SRES_NGINX_BIN" >/dev/null 2>&1; then
+  config_file="$rendered_dir/nginx.conf"
+  standalone_nginx_config "$rendered_dir" "$config_file"
+  "$SRES_NGINX_BIN" -t -q -c "$config_file"
+else
+  printf '%s\n' "Aviso: nginx não está disponível; validação de sintaxe será feita no host da VPS." >&2
+fi
+printf '%s\n' "Configuração Nginx do SReS validada sem reload."

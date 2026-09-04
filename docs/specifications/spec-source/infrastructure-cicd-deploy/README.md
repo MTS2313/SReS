@@ -6,7 +6,7 @@ planned — specification proposta, ainda não implementada.
 
 ## Problema
 
-O SReS possui API MVP concluída, imagem Docker validada e ambiente local, mas não possui uma definição versionada para publicar imagens, executar CI, instalar a aplicação em uma VPS Linux, operar serviços persistentes, validar releases ou fazer rollback seguro.
+O SReS possui API MVP concluída, imagem Docker validada, ambiente local e automações versionadas iniciais de Compose, CI, publicação GHCR e deploy por SHA. Esta iniciativa completa a preparação reproduzível da VPS, Nginx/TLS, backups e operação segura.
 
 ## Objetivo
 
@@ -23,7 +23,7 @@ Esta specification não implementa os arquivos descritos. A implementação ocor
   `docker build -f backend/Dockerfile -t sres-api:local .`.
 - `compose.yaml` atual é local e mantém PostgreSQL, MinIO e Keycloak.
 - `scripts/` na raiz é a interface operacional existente.
-- Não existem workflows ou `deploy/` produtivo no SReS.
+- Existem workflows e `deploy/` versionados para Compose, CI, publicação GHCR e solicitação de deploy; a preparação real da VPS permanece responsabilidade das tasks correspondentes.
 - A referência solicitada `MTS2313/petstop-project` não está disponível neste workspace. Foi inspecionado `../pet-project` como referência local estrutural, sem assumir identidade de produto ou copiar seus serviços.
 
 ## Decisões da iniciativa
@@ -63,7 +63,7 @@ Ollama externo opcional ◄── SRES_OLLAMA_BASE_URL
 Telegram externo opcional ─ token somente em app.env
 ```
 
-Domínios são parâmetros, não valores decididos: pelo menos um domínio da API e um domínio do Keycloak serão necessários. O domínio do MinIO não é necessário para o contrato atual de downloads pela API e não deve ser público por padrão.
+Domínios fechados para a preparação da VPS: `api.sres.morfeu.cloud` para a API, `auth.sres.morfeu.cloud` para o Keycloak e `s3.sres.morfeu.cloud` para a API S3 do MinIO. O console MinIO não recebe domínio público.
 
 ## Estrutura proposta
 
@@ -203,11 +203,11 @@ Serviços:
 - `postgres`: imagem com versão explícita, volume persistente, sem porta pública, healthcheck `pg_isready`;
 - `minio`: imagem com digest ou versão explícita, volume persistente, sem console público e sem API pública salvo decisão posterior;
 - `keycloak`: imagem com versão explícita, banco persistente/compatível e healthcheck; não importar realm de desenvolvimento;
-- `api`: imagem GHCR da release, `env_file` externo, dependências saudáveis, porta vinculada somente a `127.0.0.1` para Nginx.
+- `api`: imagem GHCR da release, `env_file` externo, dependências saudáveis, porta `127.0.0.1:18081:8080` para Nginx.
 
 Todos ficam em uma rede interna nomeada `sres_internal`. Usar `restart: unless-stopped` ou equivalente, volumes nomeados `sres_*_data` e limites somente depois de medir a VPS. O Compose não deve publicar PostgreSQL, MinIO ou console Keycloak para a Internet.
 
-Keycloak pode ter uma publicação local exclusiva para o Nginx, caso seu issuer precise ser acessível por clientes externos. A API acessará `http://keycloak:8080` ou endereço interno conforme a configuração do realm; o issuer público precisa ser coerente com os tokens.
+Keycloak terá publicação local exclusiva `127.0.0.1:18083:8080` para o Nginx. MinIO terá a API S3 em `127.0.0.1:18084:9000`; seu console não será publicado. A API acessará `http://keycloak:8080` e `http://minio:9000` pela rede interna; o issuer público será `https://auth.sres.morfeu.cloud/realms/sres`.
 
 ## Portas, Nginx e TLS
 
@@ -282,7 +282,7 @@ SPRING_PROFILES_ACTIVE=prod
 SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/sres
 SPRING_DATASOURCE_USERNAME=CHANGE_ME
 SPRING_DATASOURCE_PASSWORD=CHANGE_ME
-SRES_KEYCLOAK_ISSUER=https://keycloak.<dominio-decidido>/realms/<realm-produtivo>
+SRES_KEYCLOAK_ISSUER=https://auth.sres.morfeu.cloud/realms/sres
 SRES_STORAGE_ENDPOINT=http://minio:9000
 SRES_STORAGE_ACCESS_KEY=CHANGE_ME
 SRES_STORAGE_SECRET_KEY=CHANGE_ME
@@ -404,4 +404,3 @@ Não fixar `mem_limit`/CPU arbitrários antes de medir CPU, RAM, disco, I/O e co
 ## Fora do escopo
 
 Kubernetes, k3s, GitLab, frontend, autoscaling, multi-region, Terraform complexo, Prometheus, Grafana, tracing externo, HA, múltiplas VPS, blue/green sofisticado, RAG, embeddings, CI/CD de frontend e plataforma produtiva de Ollama.
-

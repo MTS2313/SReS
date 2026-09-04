@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/sres-nginx-common"
+
+[[ "$EUID" -eq 0 ]] || die "sres-nginx-apply requer root"
+require_command install
+require_command "$SRES_NGINX_BIN"
+load_deploy_env
+validate_settings
+rendered_dir="$(mktemp -d)"
+backup_dir="$SRES_NGINX_BACKUP_DIR/$(date -u '+%Y%m%dT%H%M%SZ')"
+installed=()
+trap 'find "$rendered_dir" -type f -delete; rmdir -- "$rendered_dir"' EXIT
+render_all "$rendered_dir"
+temporary_config="$rendered_dir/nginx.conf"
+standalone_nginx_config "$rendered_dir" "$temporary_config"
+"$SRES_NGINX_BIN" -t -q -c "$temporary_config"
+mkdir -p "$SRES_NGINX_SITES_AVAILABLE_DIR" "$SRES_NGINX_SITES_ENABLED_DIR" "$SRES_NGINX_BACKUP_DIR"
+
+for site in sres-api sres-auth sres-s3; do
+  target="$SRES_NGINX_SITES_AVAILABLE_DIR/$site.conf"
+  enabled="$SRES_NGINX_SITES_ENABLED_DIR/$site.conf"
+  mkdir -p "$backup_dir"
+  if [[ -e "$target" ]]; then
+    cp -p -- "$target" "$backup_dir/$site.conf"
+  else
+    : > "$backup_dir/$site.conf.absent"
+  fi
+  if [[ -e "$enabled" || -L "$enabled" ]]; then
+    cp -a -- "$enabled" "$backup_dir/$site.enabled"
+  else
+    : > "$backup_dir/$site.enabled.absent"
+  fi
+  install -o root -g root -m 644 "$rendered_dir/$site.conf" "$target"
+  ln -sfn -- "../sites-available/$site.conf" "$enabled"
+  installed+=("$site")
+done
+
+restore_on_failure() {
+  local site target
+  for site in "${installed[@]}"; do
+    target="$SRES_NGINX_SITES_AVAILABLE_DIR/$site.conf"
+    enabled="$SRES_NGINX_SITES_ENABLED_DIR/$site.conf"
+    if [[ -f "$backup_dir/$site.conf" ]]; then cp -p -- "$backup_dir/$site.conf" "$target"; else rm -f -- "$target"; fi
+    if [[ -e "$backup_dir/$site.enabled" || -L "$backup_dir/$site.enabled" ]]; then
+      rm -f -- "$enabled"
+      cp -a -- "$backup_dir/$site.enabled" "$enabled"
+    else
+      rm -f -- "$enabled"
+    fi
+  done
+}
+
+if ! "$SRES_NGINX_BIN" -t; then
+  restore_on_failure
+  die "nginx -t falhou; configuração SReS restaurada sem reload"
+fi
+systemctl reload nginx
+printf '%s\n' "Configuração Nginx do SReS aplicada com reload seguro."

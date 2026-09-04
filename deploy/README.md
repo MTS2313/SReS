@@ -2,7 +2,7 @@
 
 ## Estado
 
-Current: estrutura, Compose, instalação local, deploy por SHA, healthcheck, rollback sem alteração de volumes/migrations, CI do backend, publicação da imagem no GHCR e workflow de deploy SSH protegido.
+Current: estrutura, Compose, instalação local, bootstrap idempotente, templates/scripts Nginx, deploy por SHA, healthcheck, rollback sem alteração de volumes/migrations, CI do backend, publicação da imagem no GHCR e workflow de deploy SSH protegido.
 
 Planned: configuração real da VPS, Nginx/TLS e execução remota com secrets configurados.
 
@@ -21,12 +21,19 @@ Planned: configuração real da VPS, Nginx/TLS e execução remota com secrets c
 - `tests/validate-compose.sh` — validação estrutural do Compose.
 - `tests/test-scripts.sh` — testes locais com fakes, sem tocar em Docker ou VPS.
 - `tests/test-deploy-workflow.sh` — validação estrutural do workflow de deploy SSH.
+- `tests/test-nginx-bootstrap.sh` — validação estrutural do bootstrap, Compose e Nginx.
 
 `app.env` contém configuração da aplicação e dependências. `deploy.env` contém somente parâmetros do mecanismo de composição/deploy. Os arquivos reais devem existir fora do Git, em `/opt/sres/app.env` e `/etc/sres/deploy.env`, com modo 600.
 
+Os domínios operacionais são `api.sres.morfeu.cloud`, `auth.sres.morfeu.cloud` e `s3.sres.morfeu.cloud`. Os binds de host são exclusivamente loopback: API `18081`, Keycloak `18083` e MinIO S3 `18084`. PostgreSQL e o console MinIO não possuem porta publicada.
+
+A exposição pública permitida na VPS é limitada a SSH, TCP 80 e TCP 443. As portas operacionais `18081`, `18083` e `18084` permanecem exclusivamente em loopback; PostgreSQL e o console MinIO continuam sem exposição pública.
+
 ## Instalação e operação
 
-Em uma VPS preparada, `bootstrap.sh` chama `scripts/install.sh`. O instalador cria `/opt/sres`, `/etc/sres` e instala os comandos em `/usr/local/bin`; não gera secrets, não sobrescreve `app.env`/`deploy.env` e não inicia a produção automaticamente.
+Em uma VPS com Docker, Compose plugin e Nginx instalados, `bootstrap.sh` valida o sistema e as portas, cria/valida `sres-deploy`, chama `scripts/install.sh`, instala sudoers limitado e aplica somente a configuração Nginx do SReS após `nginx -t`. Não gera secrets, não sobrescreve `app.env`/`deploy.env`, não remove recursos alheios e não executa deploy de imagem.
+
+O bootstrap exige root. Em caso de porta ocupada, pré-requisito ausente ou sudoers inválido, aborta antes da preparação correspondente. Certbot ausente é reportado; a emissão de certificados fica para a preparação TLS na VPS, depois de DNS e Nginx HTTP válidos.
 
 O `sres-deploy` recebe somente uma SHA Git completa de 40 caracteres:
 
@@ -80,6 +87,12 @@ O smoke deve usar `set -euo pipefail` e só pode remover os volumes `sres-compos
 
 A imagem precisa acessar o banco e MinIO pelos nomes internos. Keycloak usa o schema `keycloak`; não há importação de realm de desenvolvimento. O bucket `sres-reports` é criado pela aplicação de forma idempotente quando necessário.
 
+## Nginx e TLS
+
+Os templates versionados em `nginx/` definem somente os sites SReS. `sres-nginx-check` renderiza e valida sem modificar `/etc/nginx`; `sres-nginx-apply` preserva backups dos sites SReS, não toca em sites alheios, executa `nginx -t` antes de reload e restaura a configuração SReS em caso de falha. O MinIO expõe apenas a API S3 por `s3.sres.morfeu.cloud`; o console não recebe rota.
+
+O TLS deve seguir, na VPS, `Nginx HTTP → nginx -t → Certbot/Let's Encrypt → HTTPS → nginx -t → reload`. Não emitir certificados em testes locais. Cloudflare pode retornar IPs próprios em consultas DNS, o que não invalida a configuração.
+
 ## Interface privilegiada futura
 
 O usuário dedicado `sres-deploy` deverá receber, em configuração de VPS posterior, sudo restrito somente à interface validada `/usr/local/bin/sres-deploy`; rollback manual deverá seguir política administrativa própria. Esta task não configura sudoers, usuário ou acesso SSH.
@@ -98,6 +111,6 @@ O workflow não executa Compose, `docker login`, `git pull` ou bootstrap remoto.
 
 ## Próximas etapas
 
-Esta implementação não conecta na VPS nem configura secrets reais. A execução remota depende da preparação prevista para a VPS e da habilitação explícita de `PRODUCTION_DEPLOY_ENABLED`.
+Esta implementação não conecta na VPS nem configura secrets reais. A TASK-006 executará o bootstrap real, preparará credenciais/DNS/TLS e comprovará o deploy ponta a ponta.
 
 Nunca coloque senhas, tokens, chaves SSH ou exports de realm produtivo neste diretório.

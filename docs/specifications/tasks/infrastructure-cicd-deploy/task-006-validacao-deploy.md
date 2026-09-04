@@ -2,7 +2,7 @@
 
 ## Estado
 
-planned
+ready
 
 ## Objetivo
 
@@ -44,4 +44,3 @@ Criar primeiro cenário falho de integração global que detecte lacunas reais. 
 ## Resposta esperada
 
 Relatar Red/Green/Refactor, comandos, releases/SHA, health, smoke, rollback, backups, volumes, inspeção de secrets, limitações e estado final da iniciativa.
-

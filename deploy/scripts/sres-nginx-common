@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SRES_ROOT_DIR="${SRES_ROOT_DIR:-/opt/sres}"
+SRES_CONFIG_DIR="${SRES_CONFIG_DIR:-/etc/sres}"
+SRES_DEPLOY_ENV_FILE="${SRES_DEPLOY_ENV_FILE:-$SRES_CONFIG_DIR/deploy.env}"
+SRES_NGINX_TEMPLATE_DIR="${SRES_NGINX_TEMPLATE_DIR:-$SRES_ROOT_DIR/nginx}"
+SRES_NGINX_CONFIG_DIR="${SRES_NGINX_CONFIG_DIR:-/etc/nginx}"
+SRES_NGINX_SITES_AVAILABLE_DIR="${SRES_NGINX_SITES_AVAILABLE_DIR:-$SRES_NGINX_CONFIG_DIR/sites-available}"
+SRES_NGINX_SITES_ENABLED_DIR="${SRES_NGINX_SITES_ENABLED_DIR:-$SRES_NGINX_CONFIG_DIR/sites-enabled}"
+SRES_NGINX_BACKUP_DIR="${SRES_NGINX_BACKUP_DIR:-$SRES_ROOT_DIR/nginx-backups}"
+SRES_API_DOMAIN="${SRES_API_DOMAIN:-api.sres.morfeu.cloud}"
+SRES_AUTH_DOMAIN="${SRES_AUTH_DOMAIN:-auth.sres.morfeu.cloud}"
+SRES_S3_DOMAIN="${SRES_S3_DOMAIN:-s3.sres.morfeu.cloud}"
+SRES_API_HOST_PORT="${SRES_API_HOST_PORT:-18081}"
+SRES_KEYCLOAK_HOST_PORT="${SRES_KEYCLOAK_HOST_PORT:-18083}"
+SRES_MINIO_HOST_PORT="${SRES_MINIO_HOST_PORT:-18084}"
+SRES_NGINX_BIN="${SRES_NGINX_BIN:-nginx}"
+
+die() { printf '%s\n' "ERRO: $*" >&2; exit 1; }
+require_command() { command -v "$1" >/dev/null 2>&1 || die "comando ausente: $1"; }
+
+load_deploy_env() {
+  [[ -f "$SRES_DEPLOY_ENV_FILE" ]] || return 0
+  local key value line
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^([A-Z][A-Z0-9_]*)=([^[:space:]]*)$ ]] || die "linha inválida em deploy.env"
+    key="${BASH_REMATCH[1]}"
+    value="${BASH_REMATCH[2]}"
+    case "$key" in
+      SRES_API_DOMAIN|SRES_AUTH_DOMAIN|SRES_S3_DOMAIN|SRES_API_HOST_PORT|SRES_KEYCLOAK_HOST_PORT|SRES_MINIO_HOST_PORT)
+        printf -v "$key" '%s' "$value" ;;
+      *) : ;;
+    esac
+  done < "$SRES_DEPLOY_ENV_FILE"
+}
+
+valid_domain() { [[ "$1" =~ ^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$ ]]; }
+valid_port() { [[ "$1" =~ ^[0-9]+$ ]] && (( 1 <= 10#$1 && 10#$1 <= 65535 )); }
+
+validate_settings() {
+  valid_domain "$SRES_API_DOMAIN" || die "domínio da API inválido"
+  valid_domain "$SRES_AUTH_DOMAIN" || die "domínio do Keycloak inválido"
+  valid_domain "$SRES_S3_DOMAIN" || die "domínio do MinIO inválido"
+  valid_port "$SRES_API_HOST_PORT" || die "porta da API inválida"
+  valid_port "$SRES_KEYCLOAK_HOST_PORT" || die "porta do Keycloak inválida"
+  valid_port "$SRES_MINIO_HOST_PORT" || die "porta do MinIO inválida"
+  [[ "$SRES_API_HOST_PORT" != "$SRES_KEYCLOAK_HOST_PORT" && "$SRES_API_HOST_PORT" != "$SRES_MINIO_HOST_PORT" && "$SRES_KEYCLOAK_HOST_PORT" != "$SRES_MINIO_HOST_PORT" ]] || die "portas loopback duplicadas"
+  [[ -d "$SRES_NGINX_TEMPLATE_DIR" ]] || die "diretório de templates ausente: $SRES_NGINX_TEMPLATE_DIR"
+  for template in sres-api.conf.template sres-auth.conf.template sres-s3.conf.template; do
+    [[ -f "$SRES_NGINX_TEMPLATE_DIR/$template" ]] || die "template ausente: $template"
+  done
+}
+
+render_template() {
+  local input="$1" output="$2"
+  awk -v api_domain="$SRES_API_DOMAIN" -v auth_domain="$SRES_AUTH_DOMAIN" -v s3_domain="$SRES_S3_DOMAIN" \
+    -v api_port="$SRES_API_HOST_PORT" -v auth_port="$SRES_KEYCLOAK_HOST_PORT" -v s3_port="$SRES_MINIO_HOST_PORT" \
+    '{gsub(/__SRES_API_DOMAIN__/, api_domain); gsub(/__SRES_AUTH_DOMAIN__/, auth_domain); gsub(/__SRES_S3_DOMAIN__/, s3_domain); gsub(/__SRES_API_HOST_PORT__/, api_port); gsub(/__SRES_KEYCLOAK_HOST_PORT__/, auth_port); gsub(/__SRES_MINIO_HOST_PORT__/, s3_port); print}' "$input" > "$output"
+}
+
+render_all() {
+  local output_dir="$1"
+  mkdir -p "$output_dir"
+  render_template "$SRES_NGINX_TEMPLATE_DIR/sres-api.conf.template" "$output_dir/sres-api.conf"
+  render_template "$SRES_NGINX_TEMPLATE_DIR/sres-auth.conf.template" "$output_dir/sres-auth.conf"
+  render_template "$SRES_NGINX_TEMPLATE_DIR/sres-s3.conf.template" "$output_dir/sres-s3.conf"
+}
+
+standalone_nginx_config() {
+  local rendered_dir="$1" config_file="$2"
+  cat > "$config_file" <<EOF
+pid $rendered_dir/nginx.pid;
+error_log /dev/stderr;
+events {}
+http {
+  include $rendered_dir/*.conf;
+}
+EOF
+}

@@ -1,0 +1,2 @@
+# Sudo restrito ao entrypoint que valida SHA e configurações.
+%sres-deploy ALL=(root) NOPASSWD: /usr/local/bin/sres-deploy *
